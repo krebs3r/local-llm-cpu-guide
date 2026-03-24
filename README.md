@@ -1,0 +1,104 @@
+# CPU Platform Comparison – PCIe Lanes & LLM Multi-GPU
+
+> 🇩🇪 [Deutsche Version](#deutsch) | 🇬🇧 [English Version](#english)
+
+---
+
+## English
+
+An interactive overview of **120+ AMD and Intel desktop CPUs** across all major platforms, with a focus on PCIe lane counts, multi-GPU configurations, and suitability for running **local Large Language Models (LLMs)**.
+
+### ⚡ Usage – No Build Required
+
+Download **[cpu-comparison.html](./cpu-comparison.html)** and open it directly in any browser. No installation, no build step, no server needed.
+
+Or use the live demo:
+
+👉 **[krebs3r.github.io/local-llm-cpu-guide](https://krebs3r.github.io/local-llm-cpu-guide/cpu-comparison.html)**
+
+### Platforms Covered
+
+| Platform | Manufacturer | PCIe Gen | CPU Lanes | Max GPU Config |
+|----------|-------------|----------|-----------|----------------|
+| LGA1200 | Intel | 3.0 / 4.0 | 16–20 | x8/x8 Dual |
+| LGA1700 | Intel | 5.0 / 4.0 | 20 | x8/x8 Dual |
+| LGA1851 | Intel | 5.0 | 20 | x8/x8 Dual |
+| X299 | Intel HEDT | 3.0 | 28–48 | x16/x16/x16 Triple (48-lane) |
+| AM4 | AMD | 3.0 / 4.0 | 24 | x8/x8 Dual |
+| AM5 | AMD | 5.0 | 28 | x8/x8 Dual |
+| X399 | AMD HEDT | 3.0 | 64 | x16/x16/x16 Triple |
+| TRX40 | AMD HEDT | 4.0 | 72 | x16/x16/x16 Triple |
+| TRX50 | AMD HEDT | 5.0 | 92 | x16/x16/x16 Triple |
+
+### Features
+
+- **Platform overview** with chipset-level dual/triple GPU configuration details
+- **CPU list** with filterable platform and generation selectors
+- **LLM suitability rating** for every CPU (single GPU → triple GPU use cases)
+- **iGPU info** for CPUs with integrated graphics (architecture, EU/CU count, clock, API support)
+- **Estimated used market prices** (March 2026, German market)
+- **GE / low-TDP variants** included for energy-efficient builds
+
+### Why PCIe lanes matter for LLMs
+
+Running large language models locally typically requires a dedicated GPU with significant VRAM. When running **multiple GPUs** to pool VRAM:
+
+- **Single GPU**: PCIe lane count is irrelevant after model load. Even x4 lanes are fine for inference.
+- **Dual GPU**: Minimum x8/x8 per GPU. Consumer platforms (AM4/AM5/LGA17xx) can do this on Z/X chipset boards.
+- **Triple GPU**: Only possible on HEDT platforms (X399, TRX40, TRX50, X299 with 44+ lanes). Consumer platforms are structurally limited.
+
+### Contributing
+
+Pull requests are welcome! If you spot incorrect specs, missing CPUs, or outdated prices, feel free to open an issue or PR.
+
+**What to contribute:**
+- Corrected or updated CPU specs / prices
+- Missing CPU models (e.g. Xeon, Ryzen Pro, older generations)
+- Additional platforms (e.g. TR5 / WRX90 Pro lineup)
+
+### Tech
+
+Single-file HTML app. React 18 + Tailwind CSS, loaded via CDN. No build step, no dependencies.
+
+---
+
+## Deutsch
+
+Eine interaktive Übersicht über **120+ AMD- und Intel-Desktop-CPUs** aller wichtigen Plattformen, mit Fokus auf PCIe-Lane-Anzahl, Multi-GPU-Konfigurationen und Eignung für lokale **Large Language Models (LLMs)**.
+
+### ⚡ Nutzung – kein Build nötig
+
+**[cpu-comparison.html](./cpu-comparison.html)** herunterladen und direkt im Browser öffnen. Kein npm, kein Build, kein Server.
+
+Oder die Live-Demo nutzen:
+
+👉 **[krebs3r.github.io/local-llm-cpu-guide](https://krebs3r.github.io/local-llm-cpu-guide/cpu-comparison.html)**
+
+### Enthaltene Plattformen
+
+| Plattform | Hersteller | PCIe-Gen | CPU-Lanes | Max. GPU-Konfiguration |
+|-----------|-----------|----------|-----------|----------------------|
+| LGA1200 | Intel | 3.0 / 4.0 | 16–20 | x8/x8 Dual |
+| LGA1700 | Intel | 5.0 / 4.0 | 20 | x8/x8 Dual |
+| LGA1851 | Intel | 5.0 | 20 | x8/x8 Dual |
+| X299 | Intel HEDT | 3.0 | 28–48 | x16/x16/x16 Triple (48-Lane) |
+| AM4 | AMD | 3.0 / 4.0 | 24 | x8/x8 Dual |
+| AM5 | AMD | 5.0 | 28 | x8/x8 Dual |
+| X399 | AMD HEDT | 3.0 | 64 | x16/x16/x16 Triple |
+| TRX40 | AMD HEDT | 4.0 | 72 | x16/x16/x16 Triple |
+| TRX50 | AMD HEDT | 5.0 | 92 | x16/x16/x16 Triple |
+
+### Features
+
+- **Plattform-Ansicht** mit Chipsatz-spezifischen Dual/Triple-GPU-Konfigurationsdetails
+- **CPU-Liste** mit filterbarer Plattform- und Generationsauswahl
+- **LLM-Eignungsbewertung** für jede CPU
+- **iGPU-Informationen** für CPUs mit integrierter Grafik
+- **Gebrauchtmarkt-Preisschätzungen** (März 2026, DE-Markt)
+- **GE / Low-TDP-Varianten** enthalten
+
+---
+
+## License
+
+MIT – do whatever you want, attribution appreciated.
