@@ -549,7 +549,7 @@ function App() {
                       <div className="text-white font-semibold text-xs">{m.desc}</div>
                       <div className="text-gray-500 text-[10px] mt-0.5 truncate">{m.pcieSummary}</div>
                     </div>
-                    <span className={`${llm.text} text-[10px] font-medium hidden sm:flex items-center gap-1 whitespace-nowrap`}><span className={`w-1.5 h-1.5 rounded-full ${llm.dot}`}/>{llm.label[lang]}</span>
+                    <span className={`${llm.text} text-[10px] font-medium hidden sm:block whitespace-nowrap`}>{llm.label[lang]}</span>
                     <span className={`text-gray-600 text-sm shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
                   </button>
                   {isOpen && (
@@ -598,7 +598,7 @@ function App() {
                       <div className="text-white font-semibold text-xs">{m.desc}</div>
                       <div className="text-gray-500 text-[10px] mt-0.5 truncate">{m.pcieSummary}</div>
                     </div>
-                    <span className={`${llm.text} text-[10px] font-medium hidden sm:flex items-center gap-1 whitespace-nowrap`}><span className={`w-1.5 h-1.5 rounded-full ${llm.dot}`}/>{llm.label[lang]}</span>
+                    <span className={`${llm.text} text-[10px] font-medium hidden sm:block whitespace-nowrap`}>{llm.label[lang]}</span>
                     <span className={`text-gray-600 text-sm shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
                   </button>
                   {isOpen && (
@@ -707,9 +707,7 @@ function App() {
             {/* Legend */}
             <div className="flex flex-wrap gap-x-3 gap-y-1 mb-3 text-[10px]">
               {Object.entries(LC).map(([k,v])=>(
-                <span key={k} className={`${v.text} flex items-center gap-1`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${v.dot}`}/>{v.label[lang]}
-                </span>
+                <span key={k} className={`${v.text}`}>{v.label[lang]}</span>
               ))}
               <span className="ml-auto text-gray-700 italic">{T[lang].priceLegend}</span>
             </div>
@@ -754,9 +752,7 @@ function App() {
                                   </div>
                                   <div className="text-[11px] text-gray-500">{cpu.arch} · {cpu.base}–{cpu.boost} GHz · {cpu.tdp}W</div>
                                 </div>
-                                <span className={`${llm.text} text-[10px] font-medium hidden md:flex items-center gap-1 whitespace-nowrap`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${llm.dot}`}/>{llm.label[lang]}
-                                </span>
+                                <span className={`${llm.text} text-[10px] font-medium hidden md:block whitespace-nowrap`}>{llm.label[lang]}</span>
                                 <div className={`${pc.bg} ${pc.text} px-2 py-1.5 rounded-lg text-right shrink-0`}>
                                   <div className="text-[11px] font-semibold whitespace-nowrap">{cpu.priceUsed}</div>
                                   <div className="text-[9px] opacity-70">{PL[cpu.priceRating][lang]}</div>
@@ -801,7 +797,7 @@ function App() {
                                   {curTab==="llm" && (
                                     <div className="px-3 pb-3 pt-2.5">
                                       <div className={`inline-flex items-center gap-2 mb-2 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-800 ${llm.text}`}>
-                                        <span className={`w-2 h-2 rounded-full ${llm.dot}`}/>LLM: {llm.label[lang]}
+                                        LLM: {llm.label[lang]}
                                       </div>
                                       <div className="bg-gray-800 rounded-lg p-2.5 text-xs text-gray-300 leading-relaxed">{cpu.llmText}</div>
                                     </div>
