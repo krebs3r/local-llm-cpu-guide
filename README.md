@@ -4,11 +4,11 @@ An interactive overview of **120+ AMD and Intel desktop CPUs** across all major 
 
 ### ⚡ Usage – No Build Required
 
-Download **[cpu-comparison.html](./cpu-comparison.html)** and open it directly in any browser. No installation, no build step, no server needed.
+Download **[index.html](./index.html)** and open it directly in any browser. No installation, no build step, no server needed.
 
 Or use the live demo:
 
-👉 **[krebs3r.github.io/local-llm-cpu-guide](https://krebs3r.github.io/local-llm-cpu-guide/cpu-comparison.html)**
+👉 **[krebs3r.github.io/local-llm-cpu-guide](https://krebs3r.github.io/local-llm-cpu-guide/)**
 
 ### Platforms Covered
 
