@@ -29,9 +29,11 @@ Or use the live demo:
 - **Platform overview** with chipset-level dual/triple GPU configuration details
 - **CPU list** with filterable platform and generation selectors
 - **LLM suitability rating** for every CPU (single GPU → triple GPU use cases)
+- **Cinebench R23 & R24** single-core and multi-core scores for 120+ CPUs
 - **iGPU info** for CPUs with integrated graphics (architecture, EU/CU count, clock, API support)
-- **Estimated used market prices** (March 2026, German market)
+- **Estimated used market prices** (March 2026, German market) with color-coded price tiers
 - **GE / low-TDP variants** included for energy-efficient builds
+- **DE / EN** language toggle
 
 ### Why PCIe lanes matter for LLMs
 
