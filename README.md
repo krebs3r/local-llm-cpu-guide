@@ -29,6 +29,9 @@ Or use the live demo:
 - **Platform overview** with chipset-level dual/triple GPU configuration details
 - **CPU list** with filterable platform and generation selectors
 - **CPU comparison** – select up to 4 CPUs and compare specs side-by-side (cores, clock, TDP, PCIe, Cinebench, price, LLM rating), with best values highlighted
+- **URL sharing** – comparison state is encoded in the URL, shareable via copy-link button
+- **PNG export** – export the comparison table as a PNG image (fixed width regardless of CPU count)
+- **Launch MSRP & release date** for all 128 CPUs
 - **LLM suitability rating** for every CPU (single GPU → triple GPU use cases)
 - **Cinebench R23 & R24** single-core and multi-core scores for 120+ CPUs
 - **iGPU info** for CPUs with integrated graphics (architecture, EU/CU count, clock, API support)
@@ -36,6 +39,7 @@ Or use the live demo:
 - **GE / low-TDP variants** included for energy-efficient builds
 - **DE / EN** language toggle
 - **GitHub dark mode** UI design
+- **Version badge** displayed next to the GitHub link
 
 ### Why PCIe lanes matter for LLMs
 

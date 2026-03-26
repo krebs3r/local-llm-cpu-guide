@@ -45,9 +45,9 @@ const T = {
     subtitle:       "AMD AM4/AM5/X399/TRX40/TRX50 · Intel LGA1200/LGA1700/LGA1851/X299 · PCIe-Lanes & LLM Multi-GPU",
     headerDesc:     "Welche CPU hat genug PCIe-Lanes für zwei oder drei GPUs? Dieser Guide vergleicht 120+ Desktop-CPUs hinsichtlich PCIe-Lane-Anzahl, Dual/Triple-GPU-Fähigkeit und Eignung für lokale LLMs.",
     headerBadges:   ["PCIe Lanes & GPU-Slots","Dual- & Triple-GPU","LLM-Eignung","Cinebench R23/R24","Gebrauchtpreise Mär 2026"],
-    tabPlatform:    "🏗 Plattform",
-    tabCpu:         "📋 CPU-Liste",
-    tabCompare:     "⚖ Vergleich",
+    tabPlatform:    "Plattform",
+    tabCpu:         "CPU-Liste",
+    tabCompare:     "Vergleich",
     compareTitle:   "CPU-Vergleich",
     compareEmpty:   "Wähle bis zu 4 CPUs aus der CPU-Liste zum Vergleichen aus.",
     compareClear:   "Alle entfernen",
@@ -64,7 +64,7 @@ const T = {
     ],
     intelHeader:    "Intel Consumer & HEDT",
     amdHeader:      "AMD Consumer & HEDT",
-    llmVerdict:     "🧠 LLM-Fazit:",
+    llmVerdict:     "LLM-Fazit:",
     chipsetConfig:  "Chipsatz & GPU-Konfiguration",
     chipsetLabel:   "Chipsatz:",
     dualGpuLabel:   "Dual GPU:",
@@ -76,11 +76,11 @@ const T = {
     allFilter:      "Alle",
     priceLegend:    "* Gebraucht-Schätzpreise Mär 2026",
     cores:          "Kerne",
-    tabSpecs:       "📋 Specs",
-    tabLlm:         "🧠 LLM-Eignung",
+    tabSpecs:       "Specs",
+    tabLlm:         "LLM-Eignung",
     igpuTitle:      "Integrierte Grafikeinheit",
     igpuNote:       "Hinweis: iGPU ist für Displayausgabe, nicht für ML-Workloads geeignet. Ermöglicht GPU-Passthrough der dedizierten GPU.",
-    recTitle:       "💡 Empfehlung nach Use Case",
+    recTitle:       "Empfehlung nach Use Case",
     recs: [
       {i:"🤖",    l:"LLM Single GPU",   c:"text-[#c9d1d9]",   r:"Jede moderne CPU ausreichend. AM5/LGA1700 empfohlen."},
       {i:"🤖🤖",  l:"LLM Dual GPU",     c:"text-yellow-400", r:"Intel: Z790/Z890 mit x8/x8 PCIe 5.0. AMD: X870E oder X399/TRX40 x16/x16."},
@@ -95,9 +95,9 @@ const T = {
     subtitle:       "AMD AM4/AM5/X399/TRX40/TRX50 · Intel LGA1200/LGA1700/LGA1851/X299 · PCIe Lanes & LLM Multi-GPU",
     headerDesc:     "Which CPU has enough PCIe lanes for two or three GPUs? This guide compares 120+ desktop CPUs by PCIe lane count, dual/triple-GPU capability, and suitability for running local LLMs.",
     headerBadges:   ["PCIe Lanes & GPU Slots","Dual & Triple GPU","LLM Suitability","Cinebench R23/R24","Used Prices Mar 2026"],
-    tabPlatform:    "🏗 Platform",
-    tabCpu:         "📋 CPU List",
-    tabCompare:     "⚖ Compare",
+    tabPlatform:    "Platform",
+    tabCpu:         "CPU List",
+    tabCompare:     "Compare",
     compareTitle:   "CPU Comparison",
     compareEmpty:   "Select up to 4 CPUs from the CPU list to compare.",
     compareClear:   "Clear all",
@@ -114,7 +114,7 @@ const T = {
     ],
     intelHeader:    "Intel Consumer & HEDT",
     amdHeader:      "AMD Consumer & HEDT",
-    llmVerdict:     "🧠 LLM Verdict:",
+    llmVerdict:     "LLM Verdict:",
     chipsetConfig:  "Chipset & GPU Configuration",
     chipsetLabel:   "Chipset:",
     dualGpuLabel:   "Dual GPU:",
@@ -126,11 +126,11 @@ const T = {
     allFilter:      "All",
     priceLegend:    "* Used-market estimates Mar 2026",
     cores:          "Cores",
-    tabSpecs:       "📋 Specs",
-    tabLlm:         "🧠 LLM Suitability",
+    tabSpecs:       "Specs",
+    tabLlm:         "LLM Suitability",
     igpuTitle:      "Integrated Graphics Unit",
     igpuNote:       "Note: iGPU is for display output only, not for ML workloads. Enables GPU passthrough for the dedicated GPU.",
-    recTitle:       "💡 Recommendation by Use Case",
+    recTitle:       "Recommendation by Use Case",
     recs: [
       {i:"🤖",    l:"LLM Single GPU",   c:"text-[#c9d1d9]",   r:"Any modern CPU is sufficient. AM5/LGA1700 recommended."},
       {i:"🤖🤖",  l:"LLM Dual GPU",     c:"text-yellow-400", r:"Intel: Z790/Z890 with x8/x8 PCIe 5.0. AMD: X870E or X399/TRX40 x16/x16."},
@@ -317,7 +317,7 @@ const PLATFORM_META = {
   },
 };
 
-const APP_VERSION = "v10";
+const APP_VERSION = "v13";
 const PLATFORM_ORDER = ["LGA1200","LGA1700","LGA1851","X299_Intel","AM4","AM5","X399","TRX40","TRX50"];
 
 // ─── CPU Launch data (MSRP & Release date) ────────────────────────────────────
@@ -796,20 +796,18 @@ function App() {
               <span key={b} className="bg-[#21262d] border border-[#30363d] text-[#c9d1d9] text-[11px] px-2 py-0.5 rounded-full">{b}</span>
             ))}
           </div>
-          <a href="https://github.com/krebs3r/local-llm-cpu-guide" target="_blank" rel="noopener noreferrer"
-            className="ml-5 mt-1 inline-flex items-center gap-1.5 text-[10px] text-[#484f58] hover:text-[#8b949e] transition-colors">
-            <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-            github.com/krebs3r/local-llm-cpu-guide
-            <span className="font-mono text-[#484f58]">· {APP_VERSION}</span>
-          </a>
         </div>
 
         {/* View toggle */}
         <div className="flex gap-2 mb-4">
-          {[["platform",T[lang].tabPlatform],["cpu",T[lang].tabCpu],["compare",T[lang].tabCompare+(compareList.length>0?" ("+compareList.length+")":"")]].map(([v,l])=>(
+          {[
+            ["platform", <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M1 2.75C1 1.784 1.784 1 2.75 1h2.5C6.216 1 7 1.784 7 2.75v2.5C7 6.216 6.216 7 5.25 7h-2.5C1.784 7 1 6.216 1 5.25Zm8 0C9 1.784 9.784 1 10.75 1h2.5C14.216 1 15 1.784 15 2.75v2.5C15 6.216 14.216 7 13.25 7h-2.5C9.784 7 9 6.216 9 5.25Zm-8 8C1 9.784 1.784 9 2.75 9h2.5C6.216 9 7 9.784 7 10.75v2.5C7 14.216 6.216 15 5.25 15h-2.5C1.784 15 1 14.216 1 13.25Zm8 0C9 9.784 9.784 9 10.75 9h2.5c.966 0 1.75.784 1.75 1.75v2.5c0 .966-.784 1.75-1.75 1.75h-2.5C9.784 15 9 14.216 9 13.25Z"/></svg>, T[lang].tabPlatform],
+            ["cpu",      <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M2 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3.75-1.5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Zm0 5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Zm0 5a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5ZM2 9a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>, T[lang].tabCpu],
+            ["compare",  <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8.75 1.75a.75.75 0 0 0-1.5 0v12.5a.75.75 0 0 0 1.5 0V1.75ZM1 3.75A.75.75 0 0 1 1.75 3H6v10H1.75A.75.75 0 0 1 1 12.25V3.75ZM10 3h4.25a.75.75 0 0 1 .75.75v8.5a.75.75 0 0 1-.75.75H10V3Z"/></svg>, T[lang].tabCompare+(compareList.length>0?" ("+compareList.length+")":"")],
+          ].map(([v,icon,l])=>(
             <button key={v} onClick={()=>setView(v)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${view===v?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
-              {l}
+              className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${view===v?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
+              {icon}{l}
             </button>
           ))}
         </div>
@@ -1072,10 +1070,13 @@ function App() {
                               {isOpen && (
                                 <div className="border-t border-[#30363d]">
                                   <div className="flex border-b border-[#30363d]">
-                                    {["specs","llm"].map(t=>(
+                                    {[
+                                      ["specs", <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M0 2.75A.75.75 0 0 1 .75 2h14.5a.75.75 0 0 1 0 1.5H.75A.75.75 0 0 1 0 2.75Zm0 5A.75.75 0 0 1 .75 7h14.5a.75.75 0 0 1 0 1.5H.75A.75.75 0 0 1 0 7.75Zm0 5a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75Z"/></svg>, T[lang].tabSpecs],
+                                      ["llm",   <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M6.5.75V2h3V.75a.75.75 0 0 1 1.5 0V2h.75A2.25 2.25 0 0 1 14 4.25V5h1.25a.75.75 0 0 1 0 1.5H14v3h1.25a.75.75 0 0 1 0 1.5H14v.75A2.25 2.25 0 0 1 11.75 14H11v1.25a.75.75 0 0 1-1.5 0V14h-3v1.25a.75.75 0 0 1-1.5 0V14H4.25A2.25 2.25 0 0 1 2 11.75V11H.75a.75.75 0 0 1 0-1.5H2v-3H.75a.75.75 0 0 1 0-1.5H2V4.25A2.25 2.25 0 0 1 4.25 2H5V.75a.75.75 0 0 1 1.5 0ZM3.5 4.25v7.5c0 .414.336.75.75.75h7.5a.75.75 0 0 0 .75-.75v-7.5a.75.75 0 0 0-.75-.75h-7.5a.75.75 0 0 0-.75.75Zm2 1.5A.75.75 0 0 1 6.25 5h3.5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-.75.75h-3.5A.75.75 0 0 1 5.5 9.25Z"/></svg>, T[lang].tabLlm],
+                                    ].map(([t,icon,label])=>(
                                       <button key={t} onClick={()=>setTab(cpu.model,t)}
-                                        className={`flex-1 py-1.5 text-[11px] font-medium transition-colors ${curTab===t?"text-[#58a6ff] border-b-2 border-[#1f6feb] bg-[#21262d]":"text-[#6e7681] hover:text-[#c9d1d9]"}`}>
-                                        {t==="specs"?T[lang].tabSpecs:T[lang].tabLlm}
+                                        className={`flex-1 inline-flex items-center justify-center gap-1 py-1.5 text-[11px] font-medium transition-colors ${curTab===t?"text-[#58a6ff] border-b-2 border-[#1f6feb] bg-[#21262d]":"text-[#6e7681] hover:text-[#c9d1d9]"}`}>
+                                        {icon}{label}
                                       </button>
                                     ))}
                                   </div>
@@ -1261,7 +1262,14 @@ function App() {
         </div>
 
         <div className="text-[10px] text-[#3d444d] mt-3 text-center">
-          {T[lang].footer}
+          {T[lang].footer} · <span className="font-mono">{APP_VERSION}</span>
+        </div>
+        <div className="mt-1 text-center">
+          <a href="https://github.com/krebs3r/local-llm-cpu-guide" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-[10px] text-[#3d444d] hover:text-[#8b949e] transition-colors">
+            <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            github.com/krebs3r/local-llm-cpu-guide
+          </a>
         </div>
       </div>
     </div>
