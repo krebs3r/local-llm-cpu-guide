@@ -45,8 +45,8 @@ const CPU_LAUNCH = {
   "Core Ultra 7 265KF": { msrp:"$379",  released:"Okt 2024" },
   "Core Ultra 9 285K":  { msrp:"$589",  released:"Okt 2024" },
   // ── Intel LGA1851 – Arrow Lake Refresh (Feb 2025) ────────────────────────
-  "Core Ultra 5 250K Plus": { msrp:"$299", released:"Feb 2025" },
-  "Core Ultra 7 270K Plus": { msrp:"$394", released:"Feb 2025" },
+  "Core Ultra 5 250K Plus": { msrp:"$199", released:"Mär 2026" },
+  "Core Ultra 7 270K Plus": { msrp:"$299", released:"Mär 2026" },
   // ── Intel X299 – Skylake-X (Jun / Aug 2017) ───────────────────────────────
   "Core i7-7800X":     { msrp:"$389",   released:"Jun 2017" },
   "Core i7-7820X":     { msrp:"$599",   released:"Jun 2017" },
