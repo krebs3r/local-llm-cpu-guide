@@ -27,7 +27,7 @@
   <!-- Babel Standalone (JSX transpiler) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.25.6/babel.min.js"></script>
   <style>
-    body { margin: 0; background-color: #030712; }
+    body { margin: 0; background-color: #0d1117; }
     * { box-sizing: border-box; }
   </style>
 </head>
@@ -45,6 +45,13 @@ const T = {
     headerBadges:   ["PCIe Lanes & GPU-Slots","Dual- & Triple-GPU","LLM-Eignung","Cinebench R23/R24","Gebrauchtpreise Mär 2026"],
     tabPlatform:    "🏗 Plattform",
     tabCpu:         "📋 CPU-Liste",
+    tabCompare:     "⚖ Vergleich",
+    compareTitle:   "CPU-Vergleich",
+    compareEmpty:   "Wähle bis zu 4 CPUs aus der CPU-Liste zum Vergleichen aus.",
+    compareClear:   "Alle entfernen",
+    compareMax:     "Max. 4 CPUs gleichzeitig vergleichbar.",
+    compareSpec:    "Eigenschaft",
+    compareRows:    ["Kerne / Threads","Takt (GHz)","TDP","PCIe","RAM","Preis (Gebraucht)","CB R23 Single","CB R23 Multi","CB R24 Single","CB R24 Multi","LLM-Eignung"],
     infoCards: [
       {t:"Single GPU", d:"Alle Plattformen. x4–x16 reicht für Inference."},
       {t:"Dual GPU",   d:"Consumer: max. x8/x8. HEDT (44+ Lanes): x16/x16."},
@@ -70,7 +77,7 @@ const T = {
     igpuNote:       "Hinweis: iGPU ist für Displayausgabe, nicht für ML-Workloads geeignet. Ermöglicht GPU-Passthrough der dedizierten GPU.",
     recTitle:       "💡 Empfehlung nach Use Case",
     recs: [
-      {i:"🤖",    l:"LLM Single GPU",   c:"text-gray-300",   r:"Jede moderne CPU ausreichend. AM5/LGA1700 empfohlen."},
+      {i:"🤖",    l:"LLM Single GPU",   c:"text-[#c9d1d9]",   r:"Jede moderne CPU ausreichend. AM5/LGA1700 empfohlen."},
       {i:"🤖🤖",  l:"LLM Dual GPU",     c:"text-yellow-400", r:"Intel: Z790/Z890 mit x8/x8 PCIe 5.0. AMD: X870E oder X399/TRX40 x16/x16."},
       {i:"🤖🤖🤖",l:"LLM Triple GPU",   c:"text-green-400",  r:"NUR HEDT. AMD TRX40 (TR 3970X) oder Intel X299 48-Lane (i9-10980XE)."},
       {i:"💰",    l:"Budget Multi-GPU", c:"text-emerald-400",r:"AMD TR 1950X/2950X (X399) oder Intel i9-7900X+ (X299) – günstigste HEDT-Plattformen."},
@@ -85,6 +92,13 @@ const T = {
     headerBadges:   ["PCIe Lanes & GPU Slots","Dual & Triple GPU","LLM Suitability","Cinebench R23/R24","Used Prices Mar 2026"],
     tabPlatform:    "🏗 Platform",
     tabCpu:         "📋 CPU List",
+    tabCompare:     "⚖ Compare",
+    compareTitle:   "CPU Comparison",
+    compareEmpty:   "Select up to 4 CPUs from the CPU list to compare.",
+    compareClear:   "Clear all",
+    compareMax:     "Max. 4 CPUs can be compared at once.",
+    compareSpec:    "Property",
+    compareRows:    ["Cores / Threads","Clock (GHz)","TDP","PCIe","RAM","Price (Used)","CB R23 Single","CB R23 Multi","CB R24 Single","CB R24 Multi","LLM Suitability"],
     infoCards: [
       {t:"Single GPU", d:"All platforms. x4–x16 is sufficient for inference."},
       {t:"Dual GPU",   d:"Consumer: max. x8/x8. HEDT (44+ lanes): x16/x16."},
@@ -110,7 +124,7 @@ const T = {
     igpuNote:       "Note: iGPU is for display output only, not for ML workloads. Enables GPU passthrough for the dedicated GPU.",
     recTitle:       "💡 Recommendation by Use Case",
     recs: [
-      {i:"🤖",    l:"LLM Single GPU",   c:"text-gray-300",   r:"Any modern CPU is sufficient. AM5/LGA1700 recommended."},
+      {i:"🤖",    l:"LLM Single GPU",   c:"text-[#c9d1d9]",   r:"Any modern CPU is sufficient. AM5/LGA1700 recommended."},
       {i:"🤖🤖",  l:"LLM Dual GPU",     c:"text-yellow-400", r:"Intel: Z790/Z890 with x8/x8 PCIe 5.0. AMD: X870E or X399/TRX40 x16/x16."},
       {i:"🤖🤖🤖",l:"LLM Triple GPU",   c:"text-green-400",  r:"HEDT ONLY. AMD TRX40 (TR 3970X) or Intel X299 48-lane (i9-10980XE)."},
       {i:"💰",    l:"Budget Multi-GPU", c:"text-emerald-400",r:"AMD TR 1950X/2950X (X399) or Intel i9-7900X+ (X299) – cheapest HEDT platforms."},
@@ -192,7 +206,7 @@ const PLATFORM_EN = {
 const PLATFORM_META = {
   // ── Intel Mainstream ──────────────────────────────────────────────────────
   LGA1200: {
-    label:"LGA1200", badge:"Intel", style:"bg-blue-800 text-blue-200",
+    label:"LGA1200", badge:"Intel", style:"bg-[#1c2d4a] text-[#79c0ff]",
     desc:"Intel 10th (Comet Lake) & 11th Gen (Rocket Lake) · PCIe 3.0/4.0 · 16–20 CPU-Lanes · DDR4",
     note:"Consumer-Mainstream — gleiche Dual-GPU-Limitierung wie AM4",
     pcieSummary:"10th Gen: 16 PCIe 3.0 Lanes · 11th Gen: 20 PCIe 4.0 Lanes · max. x8/x8 Dual-GPU (Z490/Z590)",
@@ -204,7 +218,7 @@ const PLATFORM_META = {
     ],
   },
   LGA1700: {
-    label:"LGA1700", badge:"Intel", style:"bg-blue-800 text-blue-200",
+    label:"LGA1700", badge:"Intel", style:"bg-[#1c2d4a] text-[#79c0ff]",
     desc:"Intel 12th–14th Gen (Alder/Raptor Lake) · PCIe 5.0/4.0 · 20 CPU-Lanes · DDR4/DDR5",
     note:"Aktuelle Intel-Consumer-Plattform — Dual-GPU möglich, kein Triple-GPU",
     pcieSummary:"16× PCIe 5.0 (GPU) + 4× PCIe 4.0 (NVMe) · max. x8/x8 Dual-GPU (Z690/Z790)",
@@ -216,7 +230,7 @@ const PLATFORM_META = {
     ],
   },
   LGA1851: {
-    label:"LGA1851", badge:"Intel", style:"bg-indigo-900 text-indigo-200",
+    label:"LGA1851", badge:"Intel", style:"bg-[#1a1e3d] text-[#a5b4fc]",
     desc:"Intel Core Ultra 200S (Arrow Lake) · PCIe 5.0 · 20 CPU-Lanes · DDR5",
     note:"Neueste Intel-Consumer-Plattform — kein HT auf P-Kernen",
     pcieSummary:"16× PCIe 5.0 (GPU) + 4× PCIe 5.0 (NVMe) · max. x8/x8 Dual-GPU (Z890)",
@@ -228,7 +242,7 @@ const PLATFORM_META = {
     ],
   },
   X299_Intel: {
-    label:"X299", badge:"Intel HEDT", style:"bg-orange-900 text-orange-200",
+    label:"X299", badge:"Intel HEDT", style:"bg-[#2d1a00] text-[#f0883e]",
     desc:"Intel HEDT · Skylake-X (7000) & Cascade Lake-X (10000) · PCIe 3.0 · 28–48 CPU-Lanes · DDR4 Quad-Ch · LGA 2066",
     note:"Letztes Intel-HEDT — günstig gebraucht, aber veraltet (PCIe 3.0)",
     pcieSummary:"28 Lanes (6/8-Kerner) · 44 Lanes (Skylake-X Highend) · 48 Lanes (Cascade Lake-X) · Triple-GPU möglich",
@@ -242,7 +256,7 @@ const PLATFORM_META = {
   },
   // ── AMD ───────────────────────────────────────────────────────────────────
   AM4: {
-    label:"AM4", badge:"AMD", style:"bg-gray-700 text-gray-300",
+    label:"AM4", badge:"AMD", style:"bg-[#2d2f3a] text-[#8b949e]",
     desc:"Ryzen 1000–5000 · PCIe 3.0/4.0 · 24 CPU-Lanes · DDR4",
     note:"Consumer-Mainstream — kein Triple-GPU möglich",
     pcieSummary:"24 Lanes · max. x8/x8 Dual-GPU (X470/X570 only) · kein Triple-GPU",
@@ -254,7 +268,7 @@ const PLATFORM_META = {
     ],
   },
   AM5: {
-    label:"AM5", badge:"AMD", style:"bg-sky-900 text-sky-300",
+    label:"AM5", badge:"AMD", style:"bg-[#0a1f2d] text-[#56b6d4]",
     desc:"Ryzen 7000–9000 · PCIe 5.0 · 28 CPU-Lanes · DDR5",
     note:"Aktueller AMD-Consumer-Standard — Dual-GPU möglich, kein Triple-GPU",
     pcieSummary:"28 Lanes · 4 fest für Chipsatz · max. x8/x8 Dual-GPU (X670E/X870E)",
@@ -267,7 +281,7 @@ const PLATFORM_META = {
     ],
   },
   X399: {
-    label:"X399", badge:"AMD HEDT", style:"bg-blue-900 text-blue-300",
+    label:"X399", badge:"AMD HEDT", style:"bg-[#0a1829] text-[#58a6ff]",
     desc:"Threadripper Gen 1 & 2 · PCIe 3.0 · 64 CPU-Lanes · DDR4",
     note:"AMD-HEDT-Einstieg — günstigste echte Multi-GPU-Plattform",
     pcieSummary:"64 Lanes · x16/x16/x16 Triple-GPU möglich",
@@ -276,7 +290,7 @@ const PLATFORM_META = {
     chipsets:[{ name:"X399", dualGpu:"x16/x16", tripleGpu:"x16/x16/x16 ✓", note:"64 Lanes ermöglichen Triple-GPU ohne Kompromisse (boardabhängig)." }],
   },
   TRX40: {
-    label:"TRX40", badge:"AMD HEDT", style:"bg-teal-900 text-teal-300",
+    label:"TRX40", badge:"AMD HEDT", style:"bg-[#0a2424] text-[#2ec4b6]",
     desc:"Threadripper Gen 3 (Zen 2) · PCIe 4.0 · 72 CPU-Lanes · DDR4",
     note:"Beste gebrauchte Multi-GPU-Plattform für LLMs",
     pcieSummary:"72 Lanes · x16/x16/x16 + NVMe gleichzeitig",
@@ -285,7 +299,7 @@ const PLATFORM_META = {
     chipsets:[{ name:"TRX40", dualGpu:"x16/x16 (PCIe 4.0)", tripleGpu:"x16/x16/x16 ✓", note:"ASUS ROG Zenith II, Gigabyte TRX40 AORUS Xtreme. 3× RTX 3090 = 72 GB VRAM." }],
   },
   TRX50: {
-    label:"TRX50", badge:"AMD HEDT", style:"bg-purple-900 text-purple-300",
+    label:"TRX50", badge:"AMD HEDT", style:"bg-[#1a0f2e] text-[#bc8cff]",
     desc:"Threadripper Gen 7 (Zen 4 HEDT) · PCIe 5.0 · 92 Lanes · DDR5 RDIMM",
     note:"Aktuelle AMD-HEDT-Plattform — zukunftssicher",
     pcieSummary:"92 Lanes (48× PCIe 5.0 + 24× PCIe 4.0 + Chipsatz) · Triple-GPU x16 möglich",
@@ -454,10 +468,10 @@ const cpus = [
 ];
 
 // ─── Style helpers ────────────────────────────────────────────────────────────
-const PC = { green:{bg:"bg-emerald-100",text:"text-emerald-800"}, yellow:{bg:"bg-yellow-100",text:"text-yellow-800"}, orange:{bg:"bg-orange-100",text:"text-orange-800"}, red:{bg:"bg-red-100",text:"text-red-800"} };
+const PC = { green:{bg:"bg-[#0f2f1e]",text:"text-[#3fb950]"}, yellow:{bg:"bg-[#2d1d00]",text:"text-[#d29922]"}, orange:{bg:"bg-[#2d1200]",text:"text-[#f0883e]"}, red:{bg:"bg-[#2d0909]",text:"text-[#ff7b72]"} };
 const PL = { green:{de:"Günstig",en:"Budget",range:"< 200 €"}, yellow:{de:"Moderat",en:"Moderate",range:"200–380 €"}, orange:{de:"Gehoben",en:"Premium",range:"380–550 €"}, red:{de:"Teuer",en:"Expensive",range:"> 550 €"} };
 const LC = {
-  low:         {dot:"bg-gray-600",   text:"text-gray-500",  label:{de:"✗ Nicht empfohlen", en:"✗ Not recommended"}},
+  low:         {dot:"bg-[#3d444d]",   text:"text-[#6e7681]",  label:{de:"✗ Nicht empfohlen", en:"✗ Not recommended"}},
   "medium-low":{dot:"bg-yellow-600", text:"text-yellow-400",label:{de:"◎ Eingeschränkt",   en:"◎ Limited"}},
   medium:      {dot:"bg-blue-500",   text:"text-blue-300",  label:{de:"◉ Brauchbar",        en:"◉ Usable"}},
   good:        {dot:"bg-green-500",  text:"text-green-300", label:{de:"✓ Gut (Multi-GPU)",  en:"✓ Good (Multi-GPU)"}},
@@ -479,10 +493,14 @@ function App() {
   const [expanded, setExpanded] = useState(null);
   const [cpuTab, setCpuTab]     = useState({});
   const [lang, setLang]         = useState("de");
+  const [compareList, setCompareList] = useState([]);
 
   const togglePlat = p => setPlatOpen(prev => ({...prev,[p]:!prev[p]}));
   const getTab = m => cpuTab[m]||"specs";
   const setTab = (m,t) => setCpuTab(prev=>({...prev,[m]:t}));
+  const toggleCompare = m => setCompareList(prev=>
+    prev.includes(m) ? prev.filter(x=>x!==m) : prev.length<4 ? [...prev,m] : prev
+  );
 
   const gens = useMemo(()=>{
     const src = filter==="Alle" ? cpus : cpus.filter(c=>c.platform===filter);
@@ -500,7 +518,7 @@ function App() {
   const amdPlats   = ["AM4","AM5","X399","TRX40","TRX50"];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-3 font-sans">
+    <div className="min-h-screen bg-[#0d1117] text-[#e6edf3] p-3 font-sans">
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
@@ -511,21 +529,21 @@ function App() {
             <div className="ml-auto flex gap-0.5">
               {["de","en"].map(l=>(
                 <button key={l} onClick={()=>setLang(l)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded transition-all ${lang===l?"bg-red-600 text-white":"bg-gray-800 text-gray-500 hover:text-gray-300"}`}>
+                  className={`px-2.5 py-1 text-xs font-bold rounded transition-all ${lang===l?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#6e7681] hover:text-[#c9d1d9]"}`}>
                   {l.toUpperCase()}
                 </button>
               ))}
             </div>
           </div>
-          <p className="text-gray-500 text-xs ml-5">{T[lang].subtitle}</p>
-          <p className="text-gray-400 text-sm ml-5 mt-2 max-w-2xl leading-relaxed">{T[lang].headerDesc}</p>
+          <p className="text-[#6e7681] text-xs ml-5">{T[lang].subtitle}</p>
+          <p className="text-[#8b949e] text-sm ml-5 mt-2 max-w-2xl leading-relaxed">{T[lang].headerDesc}</p>
           <div className="flex flex-wrap gap-1.5 ml-5 mt-2.5">
             {T[lang].headerBadges.map(b=>(
-              <span key={b} className="bg-gray-800 border border-gray-700 text-gray-300 text-[11px] px-2 py-0.5 rounded-full">{b}</span>
+              <span key={b} className="bg-[#21262d] border border-[#30363d] text-[#c9d1d9] text-[11px] px-2 py-0.5 rounded-full">{b}</span>
             ))}
           </div>
           <a href="https://github.com/krebs3r/local-llm-cpu-guide" target="_blank" rel="noopener noreferrer"
-            className="ml-5 mt-1 inline-flex items-center gap-1.5 text-[10px] text-gray-600 hover:text-gray-400 transition-colors">
+            className="ml-5 mt-1 inline-flex items-center gap-1.5 text-[10px] text-[#484f58] hover:text-[#8b949e] transition-colors">
             <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
             github.com/krebs3r/local-llm-cpu-guide
           </a>
@@ -533,9 +551,9 @@ function App() {
 
         {/* View toggle */}
         <div className="flex gap-2 mb-4">
-          {[["platform",T[lang].tabPlatform],["cpu",T[lang].tabCpu]].map(([v,l])=>(
+          {[["platform",T[lang].tabPlatform],["cpu",T[lang].tabCpu],["compare",T[lang].tabCompare+(compareList.length>0?" ("+compareList.length+")":"")]].map(([v,l])=>(
             <button key={v} onClick={()=>setView(v)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${view===v?"bg-red-600 text-white":"bg-gray-800 text-gray-400 hover:bg-gray-700"}`}>
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${view===v?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
               {l}
             </button>
           ))}
@@ -546,52 +564,52 @@ function App() {
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2 text-xs mb-1">
               {T[lang].infoCards.map(({t,d})=>(
-                <div key={t} className="bg-gray-900 border border-gray-800 rounded-lg p-2.5">
-                  <div className="text-gray-300 font-semibold mb-1">{t}</div>
-                  <div className="text-gray-500">{d}</div>
+                <div key={t} className="bg-[#161b22] border border-[#30363d] rounded-lg p-2.5">
+                  <div className="text-[#c9d1d9] font-semibold mb-1">{t}</div>
+                  <div className="text-[#6e7681]">{d}</div>
                 </div>
               ))}
             </div>
 
             {/* Intel section header */}
             <div className="flex items-center gap-2 mt-4 mb-1">
-              <div className="h-px flex-1 bg-blue-800"/>
-              <span className="text-xs font-bold text-blue-400 px-2">{T[lang].intelHeader}</span>
-              <div className="h-px flex-1 bg-blue-800"/>
+              <div className="h-px flex-1 bg-[#1c3a5e]"/>
+              <span className="text-xs font-bold text-[#58a6ff] px-2">{T[lang].intelHeader}</span>
+              <div className="h-px flex-1 bg-[#1c3a5e]"/>
             </div>
 
             {intelPlats.map(p=>{
               const m=PLATFORM_META[p]; const llm=PLAT_LC[m.llmVerdict]; const isOpen=platOpen[p];
               return (
-                <div key={p} className={`border rounded-xl overflow-hidden ${VB[m.llmVerdict]} bg-gray-900`}>
-                  <button className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-gray-800 transition-colors" onClick={()=>togglePlat(p)}>
+                <div key={p} className={`border rounded-xl overflow-hidden ${VB[m.llmVerdict]} bg-[#161b22]`}>
+                  <button className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#21262d] transition-colors" onClick={()=>togglePlat(p)}>
                     <div className="shrink-0">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${m.style}`}>{m.label}</span>
-                      <span className="ml-1.5 text-[10px] text-blue-500 font-semibold">{m.badge}</span>
+                      <span className="ml-1.5 text-[10px] text-[#58a6ff] font-semibold">{m.badge}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-white font-semibold text-xs">{m.desc}</div>
-                      <div className="text-gray-500 text-[10px] mt-0.5 truncate">{m.pcieSummary}</div>
+                      <div className="text-[#e6edf3] font-semibold text-xs">{m.desc}</div>
+                      <div className="text-[#6e7681] text-[10px] mt-0.5 truncate">{m.pcieSummary}</div>
                     </div>
                     <span className={`${llm.text} text-[10px] font-medium hidden sm:block whitespace-nowrap`}>{llm.label[lang]}</span>
-                    <span className={`text-gray-600 text-sm shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
+                    <span className={`text-[#484f58] text-sm shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
                   </button>
                   {isOpen && (
-                    <div className="border-t border-gray-800 px-4 pb-4 pt-3 space-y-3">
-                      <div className="bg-gray-800 rounded-lg p-3 text-xs text-gray-300 leading-relaxed">
+                    <div className="border-t border-[#30363d] px-4 pb-4 pt-3 space-y-3">
+                      <div className="bg-[#21262d] rounded-lg p-3 text-xs text-[#c9d1d9] leading-relaxed">
                         <span className={`${llm.text} font-semibold mr-2`}>{T[lang].llmVerdict}</span>{lang==="en"?(PLATFORM_EN[p]?.llmText||m.llmText):m.llmText}
                       </div>
                       <div>
-                        <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{T[lang].chipsetConfig}</div>
+                        <div className="text-[10px] font-semibold text-[#6e7681] uppercase tracking-wider mb-1.5">{T[lang].chipsetConfig}</div>
                         <div className="space-y-1.5">
                           {m.chipsets.map((cs,idx)=>(
-                            <div key={cs.name} className="bg-gray-800 rounded-lg p-2.5 text-xs">
+                            <div key={cs.name} className="bg-[#21262d] rounded-lg p-2.5 text-xs">
                               <div className="flex flex-wrap gap-x-3 gap-y-1 mb-1">
-                                <div><span className="text-gray-500">{T[lang].chipsetLabel} </span><span className="text-white font-bold">{cs.name}</span></div>
-                                <div><span className="text-gray-500">{T[lang].dualGpuLabel} </span><span className={cs.dualGpu.includes("❌")?"text-red-400":"text-emerald-400"}>{cs.dualGpu}</span></div>
-                                <div><span className="text-gray-500">{T[lang].tripleGpuLabel} </span><span className={cs.tripleGpu.includes("❌")?"text-red-400":cs.tripleGpu.includes("⚠")?"text-yellow-400":"text-emerald-400"}>{cs.tripleGpu}</span></div>
+                                <div><span className="text-[#6e7681]">{T[lang].chipsetLabel} </span><span className="text-[#e6edf3] font-bold">{cs.name}</span></div>
+                                <div><span className="text-[#6e7681]">{T[lang].dualGpuLabel} </span><span className={cs.dualGpu.includes("❌")?"text-red-400":"text-emerald-400"}>{cs.dualGpu}</span></div>
+                                <div><span className="text-[#6e7681]">{T[lang].tripleGpuLabel} </span><span className={cs.tripleGpu.includes("❌")?"text-red-400":cs.tripleGpu.includes("⚠")?"text-yellow-400":"text-emerald-400"}>{cs.tripleGpu}</span></div>
                               </div>
-                              <div className="text-gray-500 leading-relaxed">{lang==="en"?(PLATFORM_EN[p]?.chipsets[idx]?.note||cs.note):cs.note}</div>
+                              <div className="text-[#6e7681] leading-relaxed">{lang==="en"?(PLATFORM_EN[p]?.chipsets[idx]?.note||cs.note):cs.note}</div>
                             </div>
                           ))}
                         </div>
@@ -604,43 +622,43 @@ function App() {
 
             {/* AMD section header */}
             <div className="flex items-center gap-2 mt-4 mb-1">
-              <div className="h-px flex-1 bg-red-900"/>
+              <div className="h-px flex-1 bg-[#3d0a0a]"/>
               <span className="text-xs font-bold text-red-400 px-2">{T[lang].amdHeader}</span>
-              <div className="h-px flex-1 bg-red-900"/>
+              <div className="h-px flex-1 bg-[#3d0a0a]"/>
             </div>
 
             {amdPlats.map(p=>{
               const m=PLATFORM_META[p]; const llm=PLAT_LC[m.llmVerdict]; const isOpen=platOpen[p];
               return (
-                <div key={p} className={`border rounded-xl overflow-hidden ${VB[m.llmVerdict]} bg-gray-900`}>
-                  <button className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-gray-800 transition-colors" onClick={()=>togglePlat(p)}>
+                <div key={p} className={`border rounded-xl overflow-hidden ${VB[m.llmVerdict]} bg-[#161b22]`}>
+                  <button className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#21262d] transition-colors" onClick={()=>togglePlat(p)}>
                     <div className="shrink-0">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${m.style}`}>{m.label}</span>
                       <span className="ml-1.5 text-[10px] text-red-400 font-semibold">{m.badge}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-white font-semibold text-xs">{m.desc}</div>
-                      <div className="text-gray-500 text-[10px] mt-0.5 truncate">{m.pcieSummary}</div>
+                      <div className="text-[#e6edf3] font-semibold text-xs">{m.desc}</div>
+                      <div className="text-[#6e7681] text-[10px] mt-0.5 truncate">{m.pcieSummary}</div>
                     </div>
                     <span className={`${llm.text} text-[10px] font-medium hidden sm:block whitespace-nowrap`}>{llm.label[lang]}</span>
-                    <span className={`text-gray-600 text-sm shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
+                    <span className={`text-[#484f58] text-sm shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
                   </button>
                   {isOpen && (
-                    <div className="border-t border-gray-800 px-4 pb-4 pt-3 space-y-3">
-                      <div className="bg-gray-800 rounded-lg p-3 text-xs text-gray-300 leading-relaxed">
+                    <div className="border-t border-[#30363d] px-4 pb-4 pt-3 space-y-3">
+                      <div className="bg-[#21262d] rounded-lg p-3 text-xs text-[#c9d1d9] leading-relaxed">
                         <span className={`${llm.text} font-semibold mr-2`}>{T[lang].llmVerdict}</span>{lang==="en"?(PLATFORM_EN[p]?.llmText||m.llmText):m.llmText}
                       </div>
                       <div>
-                        <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">{T[lang].chipsetConfig}</div>
+                        <div className="text-[10px] font-semibold text-[#6e7681] uppercase tracking-wider mb-1.5">{T[lang].chipsetConfig}</div>
                         <div className="space-y-1.5">
                           {m.chipsets.map((cs,idx)=>(
-                            <div key={cs.name} className="bg-gray-800 rounded-lg p-2.5 text-xs">
+                            <div key={cs.name} className="bg-[#21262d] rounded-lg p-2.5 text-xs">
                               <div className="flex flex-wrap gap-x-3 gap-y-1 mb-1">
-                                <div><span className="text-gray-500">{T[lang].chipsetLabel} </span><span className="text-white font-bold">{cs.name}</span></div>
-                                <div><span className="text-gray-500">{T[lang].dualGpuLabel} </span><span className={cs.dualGpu.includes("❌")?"text-red-400":"text-emerald-400"}>{cs.dualGpu}</span></div>
-                                <div><span className="text-gray-500">{T[lang].tripleGpuLabel} </span><span className={cs.tripleGpu.includes("❌")?"text-red-400":cs.tripleGpu.includes("⚠")?"text-yellow-400":"text-emerald-400"}>{cs.tripleGpu}</span></div>
+                                <div><span className="text-[#6e7681]">{T[lang].chipsetLabel} </span><span className="text-[#e6edf3] font-bold">{cs.name}</span></div>
+                                <div><span className="text-[#6e7681]">{T[lang].dualGpuLabel} </span><span className={cs.dualGpu.includes("❌")?"text-red-400":"text-emerald-400"}>{cs.dualGpu}</span></div>
+                                <div><span className="text-[#6e7681]">{T[lang].tripleGpuLabel} </span><span className={cs.tripleGpu.includes("❌")?"text-red-400":cs.tripleGpu.includes("⚠")?"text-yellow-400":"text-emerald-400"}>{cs.tripleGpu}</span></div>
                               </div>
-                              <div className="text-gray-500 leading-relaxed">{lang==="en"?(PLATFORM_EN[p]?.chipsets[idx]?.note||cs.note):cs.note}</div>
+                              <div className="text-[#6e7681] leading-relaxed">{lang==="en"?(PLATFORM_EN[p]?.chipsets[idx]?.note||cs.note):cs.note}</div>
                             </div>
                           ))}
                         </div>
@@ -652,11 +670,11 @@ function App() {
             })}
 
             {/* Summary table */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden mt-2">
-              <div className="px-4 py-2.5 border-b border-gray-800 text-sm font-semibold text-white">{T[lang].quickCompare}</div>
+            <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden mt-2">
+              <div className="px-4 py-2.5 border-b border-[#30363d] text-sm font-semibold text-[#e6edf3]">{T[lang].quickCompare}</div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
-                  <thead><tr className="border-b border-gray-800 text-gray-500 text-[10px] uppercase">
+                  <thead><tr className="border-b border-[#30363d] text-[#6e7681] text-[10px] uppercase">
                     {T[lang].tableHeaders.map(h=><th key={h} className="text-left px-3 py-2">{h}</th>)}
                   </tr></thead>
                   <tbody>
@@ -674,11 +692,11 @@ function App() {
                       const key = p==="X299"?"X299_Intel":p;
                       const meta = PLATFORM_META[key];
                       return (
-                        <tr key={p} className="border-b border-gray-800 hover:bg-gray-800">
-                          <td className="px-3 py-2"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${meta?meta.style:"bg-gray-700 text-gray-300"}`}>{p}</span></td>
-                          <td className="px-3 py-2 text-gray-400 text-[11px]">{vendor}</td>
-                          <td className="px-3 py-2 text-gray-300">{lanes}</td>
-                          <td className="px-3 py-2 text-gray-300">{gen}</td>
+                        <tr key={p} className="border-b border-[#30363d] hover:bg-[#21262d]">
+                          <td className="px-3 py-2"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${meta?meta.style:"bg-[#30363d] text-[#c9d1d9]"}`}>{p}</span></td>
+                          <td className="px-3 py-2 text-[#8b949e] text-[11px]">{vendor}</td>
+                          <td className="px-3 py-2 text-[#c9d1d9]">{lanes}</td>
+                          <td className="px-3 py-2 text-[#c9d1d9]">{gen}</td>
                           <td className={`px-3 py-2 ${d.includes("❌")?"text-red-400":"text-emerald-400"}`}>{d}</td>
                           <td className={`px-3 py-2 ${t.includes("❌")?"text-red-400":t.includes("✓")?"text-emerald-400":"text-yellow-400"}`}>{t}</td>
                         </tr>
@@ -696,11 +714,11 @@ function App() {
           <div>
             {/* Intel / AMD filter row */}
             <div className="mb-1">
-              <div className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider mb-1 ml-1">{T[lang].intelLabel}</div>
+              <div className="text-[10px] text-[#58a6ff] font-semibold uppercase tracking-wider mb-1 ml-1">{T[lang].intelLabel}</div>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {["Alle",...intelPlats].map(p=>(
                   <button key={p} onClick={()=>{setFilter(p);setGenFilter("Alle");setExpanded(null);}}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${filter===p?"bg-blue-700 text-white":"bg-gray-800 text-gray-400 hover:bg-gray-700"}`}>
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${filter===p?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
                     {p==="Alle"?T[lang].allFilter:PLATFORM_META[p]?.label||p}
                   </button>
                 ))}
@@ -709,7 +727,7 @@ function App() {
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {amdPlats.map(p=>(
                   <button key={p} onClick={()=>{setFilter(p);setGenFilter("Alle");setExpanded(null);}}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${filter===p?"bg-red-700 text-white":"bg-gray-800 text-gray-400 hover:bg-gray-700"}`}>
+                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${filter===p?"bg-[#b91c1c] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
                     {PLATFORM_META[p]?.label||p}
                   </button>
                 ))}
@@ -721,7 +739,7 @@ function App() {
               <div className="flex flex-wrap gap-1 mb-3">
                 {gens.map(g=>(
                   <button key={g} onClick={()=>{setGenFilter(g);setExpanded(null);}}
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium transition-all ${genFilter===g?"bg-gray-500 text-white":"bg-gray-800 text-gray-500 hover:bg-gray-700"}`}>
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium transition-all ${genFilter===g?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#6e7681] hover:bg-[#30363d]"}`}>
                     {g==="Alle"?T[lang].allFilter:g}
                   </button>
                 ))}
@@ -738,7 +756,7 @@ function App() {
               {Object.entries(PL).map(([k,v])=>{const c=PC[k]; return(
                 <span key={k} className={`${c.bg} ${c.text} px-1.5 py-0.5 rounded font-medium`}>{v[lang]} {v.range}</span>
               )})}
-              <span className="ml-auto text-gray-700 italic">{T[lang].priceLegend}</span>
+              <span className="ml-auto text-[#3d444d] italic">{T[lang].priceLegend}</span>
             </div>
 
             {/* CPU rows per platform */}
@@ -754,47 +772,54 @@ function App() {
                 <div key={platform} className="mb-5">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-xs font-bold px-2 py-0.5 rounded ${meta.style}`}>{meta.label}</span>
-                    <span className={`text-[10px] font-semibold ${isIntel?"text-blue-500":"text-red-400"}`}>{meta.badge}</span>
-                    <span className="text-gray-500 text-[11px] truncate">{meta.desc}</span>
+                    <span className={`text-[10px] font-semibold ${isIntel?"text-[#58a6ff]":"text-red-400"}`}>{meta.badge}</span>
+                    <span className="text-[#6e7681] text-[11px] truncate">{meta.desc}</span>
                   </div>
-                  <div className="text-[10px] text-gray-600 mb-2 ml-1">{lang==="en"?(PLATFORM_EN[platform]?.note||meta.note):meta.note}</div>
+                  <div className="text-[10px] text-[#484f58] mb-2 ml-1">{lang==="en"?(PLATFORM_EN[platform]?.note||meta.note):meta.note}</div>
 
                   {Object.entries(byGen).map(([gen,genCpus])=>(
                     <div key={gen} className="mb-3">
-                      <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider ml-1 mb-1.5">{gen}</div>
+                      <div className="text-[10px] font-semibold text-[#484f58] uppercase tracking-wider ml-1 mb-1.5">{gen}</div>
                       <div className="space-y-1.5">
                         {genCpus.map(cpu=>{
                           const pc=PC[cpu.priceRating]; const llm=LC[cpu.llmRating];
                           const isOpen=expanded===cpu.model; const curTab=getTab(cpu.model);
                           return (
-                            <div key={cpu.model} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-                              <button className="w-full text-left px-3 py-2.5 flex items-center gap-2.5 hover:bg-gray-800 transition-colors"
+                            <div key={cpu.model} className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
+                              <button className="w-full text-left px-3 py-2.5 flex items-center gap-2.5 hover:bg-[#21262d] transition-colors"
                                 onClick={()=>setExpanded(isOpen?null:cpu.model)}>
-                                <div className="bg-gray-800 rounded-lg px-2 py-1 text-center min-w-[40px] shrink-0">
-                                  <div className="text-base font-bold leading-none text-white">{cpu.cores}</div>
-                                  <div className="text-[9px] text-gray-500">{cpu.coreDetail||T[lang].cores}</div>
+                                <div className="bg-[#21262d] rounded-lg px-2 py-1 text-center min-w-[40px] shrink-0">
+                                  <div className="text-base font-bold leading-none text-[#e6edf3]">{cpu.cores}</div>
+                                  <div className="text-[9px] text-[#6e7681]">{cpu.coreDetail||T[lang].cores}</div>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="font-semibold text-white text-sm">{cpu.model}</span>
-                                    {cpu.igpu && <span className="text-[9px] bg-blue-900 text-blue-300 px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">iGPU</span>}
+                                    <span className="font-semibold text-[#e6edf3] text-sm">{cpu.model}</span>
+                                    {cpu.igpu && <span className="text-[9px] bg-[#0a1829] text-[#58a6ff] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">iGPU</span>}
                                   </div>
-                                  <div className="text-[11px] text-gray-500">{cpu.arch} · {cpu.base}–{cpu.boost} GHz · {cpu.tdp}W</div>
+                                  <div className="text-[11px] text-[#6e7681]">{cpu.arch} · {cpu.base}–{cpu.boost} GHz · {cpu.tdp}W</div>
                                 </div>
                                 <span className={`${llm.text} text-[10px] font-medium hidden md:block whitespace-nowrap`}>{llm.label[lang]}</span>
                                 <div className={`${pc.bg} ${pc.text} px-2 py-1.5 rounded-lg text-right shrink-0 w-24`}>
                                   <div className="text-[11px] font-semibold whitespace-nowrap">{cpu.priceUsed}</div>
                                   <div className="text-[9px] opacity-70">{PL[cpu.priceRating][lang]}</div>
                                 </div>
-                                <span className={`text-gray-600 text-xs shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
+                                <button
+                                  onClick={e=>{e.stopPropagation();toggleCompare(cpu.model);}}
+                                  disabled={!compareList.includes(cpu.model)&&compareList.length>=4}
+                                  title={compareList.includes(cpu.model)?"Aus Vergleich entfernen":compareList.length>=4?"Max. 4 CPUs":"Zum Vergleich hinzufügen"}
+                                  className={`shrink-0 w-5 h-5 rounded text-[10px] font-bold transition-all border ${compareList.includes(cpu.model)?"bg-[#1f6feb] border-[#1f6feb] text-[#e6edf3]":compareList.length>=4?"bg-[#161b22] border-[#30363d] text-[#3d444d] cursor-not-allowed":"bg-[#21262d] border-[#30363d] text-[#6e7681] hover:text-[#c9d1d9] hover:border-[#484f58]"}`}>
+                                  {compareList.includes(cpu.model)?"✓":"+"}
+                                </button>
+                                <span className={`text-[#484f58] text-xs shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
                               </button>
 
                               {isOpen && (
-                                <div className="border-t border-gray-800">
-                                  <div className="flex border-b border-gray-800">
+                                <div className="border-t border-[#30363d]">
+                                  <div className="flex border-b border-[#30363d]">
                                     {["specs","llm"].map(t=>(
                                       <button key={t} onClick={()=>setTab(cpu.model,t)}
-                                        className={`flex-1 py-1.5 text-[11px] font-medium transition-colors ${curTab===t?"text-white border-b-2 border-red-500 bg-gray-800":"text-gray-500 hover:text-gray-300"}`}>
+                                        className={`flex-1 py-1.5 text-[11px] font-medium transition-colors ${curTab===t?"text-[#58a6ff] border-b-2 border-[#1f6feb] bg-[#21262d]":"text-[#6e7681] hover:text-[#c9d1d9]"}`}>
                                         {t==="specs"?T[lang].tabSpecs:T[lang].tabLlm}
                                       </button>
                                     ))}
@@ -808,36 +833,36 @@ function App() {
                                           {l:"RAM",v:cpu.ram},
                                           {l:"TDP",v:`${cpu.tdp}W`},
                                         ].map(({l,v})=>(
-                                          <div key={l} className="bg-gray-800 rounded-lg p-2">
-                                            <div className="text-gray-500 mb-0.5 text-[10px]">{l}</div>
-                                            <div className="font-bold text-white text-[11px]">{v}</div>
+                                          <div key={l} className="bg-[#21262d] rounded-lg p-2">
+                                            <div className="text-[#6e7681] mb-0.5 text-[10px]">{l}</div>
+                                            <div className="font-bold text-[#e6edf3] text-[11px]">{v}</div>
                                           </div>
                                         ))}
                                       </div>
-                                      <div className="bg-gray-800 rounded-lg p-2.5 text-xs">
-                                        <div className="text-gray-500 mb-1.5 text-[10px] uppercase tracking-wider font-semibold">Cinebench</div>
+                                      <div className="bg-[#21262d] rounded-lg p-2.5 text-xs">
+                                        <div className="text-[#6e7681] mb-1.5 text-[10px] uppercase tracking-wider font-semibold">Cinebench</div>
                                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-                                          <div className="flex justify-between"><span className="text-gray-500">R23 Single</span><span className="font-bold text-white">{cpu.cbR23s??'–'}</span></div>
-                                          <div className="flex justify-between"><span className="text-gray-500">R23 Multi</span><span className="font-bold text-white">{cpu.cbR23m??'–'}</span></div>
-                                          <div className="flex justify-between"><span className="text-gray-500">R24 Single</span><span className="font-bold text-white">{cpu.cbR24s??'–'}</span></div>
-                                          <div className="flex justify-between"><span className="text-gray-500">R24 Multi</span><span className="font-bold text-white">{cpu.cbR24m??'–'}</span></div>
+                                          <div className="flex justify-between"><span className="text-[#6e7681]">R23 Single</span><span className="font-bold text-[#e6edf3]">{cpu.cbR23s??'–'}</span></div>
+                                          <div className="flex justify-between"><span className="text-[#6e7681]">R23 Multi</span><span className="font-bold text-[#e6edf3]">{cpu.cbR23m??'–'}</span></div>
+                                          <div className="flex justify-between"><span className="text-[#6e7681]">R24 Single</span><span className="font-bold text-[#e6edf3]">{cpu.cbR24s??'–'}</span></div>
+                                          <div className="flex justify-between"><span className="text-[#6e7681]">R24 Multi</span><span className="font-bold text-[#e6edf3]">{cpu.cbR24m??'–'}</span></div>
                                         </div>
                                       </div>
                                       {cpu.igpu && (
-                                        <div className="bg-blue-950 border border-blue-800 rounded-lg p-2.5 text-xs">
-                                          <div className="text-blue-400 font-semibold mb-1 text-[10px] uppercase tracking-wider">{T[lang].igpuTitle}</div>
-                                          <div className="text-blue-200 font-medium">{cpu.igpu}</div>
-                                          <div className="text-blue-400 text-[10px] mt-1">{T[lang].igpuNote}</div>
+                                        <div className="bg-[#0a1929] border border-[#1c3a5e] rounded-lg p-2.5 text-xs">
+                                          <div className="text-[#58a6ff] font-semibold mb-1 text-[10px] uppercase tracking-wider">{T[lang].igpuTitle}</div>
+                                          <div className="text-[#a5d6ff] font-medium">{cpu.igpu}</div>
+                                          <div className="text-[#58a6ff] text-[10px] mt-1">{T[lang].igpuNote}</div>
                                         </div>
                                       )}
                                     </div>
                                   )}
                                   {curTab==="llm" && (
                                     <div className="px-3 pb-3 pt-2.5">
-                                      <div className={`inline-flex items-center gap-2 mb-2 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-800 ${llm.text}`}>
+                                      <div className={`inline-flex items-center gap-2 mb-2 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#21262d] ${llm.text}`}>
                                         LLM: {llm.label[lang]}
                                       </div>
-                                      <div className="bg-gray-800 rounded-lg p-2.5 text-xs text-gray-300 leading-relaxed">{cpu.llmText}</div>
+                                      <div className="bg-[#21262d] rounded-lg p-2.5 text-xs text-[#c9d1d9] leading-relaxed">{cpu.llmText}</div>
                                     </div>
                                   )}
                                 </div>
@@ -854,10 +879,93 @@ function App() {
           </div>
         )}
 
+        {/* ══ COMPARE VIEW ══ */}
+        {view==="compare" && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-semibold text-[#e6edf3]">{T[lang].compareTitle}</div>
+              {compareList.length>0 && (
+                <button onClick={()=>setCompareList([])} className="text-xs text-[#6e7681] hover:text-red-400 transition-colors">{T[lang].compareClear}</button>
+              )}
+            </div>
+            {compareList.length===0 ? (
+              <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-8 text-center">
+                <div className="text-[#6e7681] text-sm mb-3">{T[lang].compareEmpty}</div>
+                <button onClick={()=>setView("cpu")} className="px-4 py-1.5 bg-[#21262d] hover:bg-[#30363d] text-[#c9d1d9] text-xs rounded-full transition-colors">
+                  {T[lang].tabCpu} →
+                </button>
+              </div>
+            ) : (()=>{
+              const selCpus = compareList.map(m=>cpus.find(c=>c.model===m)).filter(Boolean);
+              const rowDefs = [
+                {i:0, numVal:null,          lower:false, val:c=>`${c.cores}/${c.threads}${c.coreDetail?" ("+c.coreDetail+")":""}`},
+                {i:1, numVal:null,          lower:false, val:c=>c.base+"–"+c.boost+" GHz"},
+                {i:2, numVal:c=>c.tdp,      lower:true,  val:c=>c.tdp+"W"},
+                {i:3, numVal:null,          lower:false, val:c=>c.pcie},
+                {i:4, numVal:null,          lower:false, val:c=>c.ram},
+                {i:5, numVal:null,          lower:false, val:c=>c.priceUsed},
+                {i:6, numVal:c=>c.cbR23s,  lower:false, val:c=>c.cbR23s??'–'},
+                {i:7, numVal:c=>c.cbR23m,  lower:false, val:c=>c.cbR23m??'–'},
+                {i:8, numVal:c=>c.cbR24s,  lower:false, val:c=>c.cbR24s??'–'},
+                {i:9, numVal:c=>c.cbR24m,  lower:false, val:c=>c.cbR24m??'–'},
+                {i:10,numVal:null,          lower:false, val:c=>LC[c.llmRating].label[lang]},
+              ];
+              return (
+                <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-[#30363d]">
+                          <th className="text-left px-3 py-2.5 text-[#6e7681] text-[10px] uppercase tracking-wider min-w-[110px] sticky left-0 bg-[#161b22] z-10">{T[lang].compareSpec}</th>
+                          {selCpus.map(cpu=>{
+                            const meta=PLATFORM_META[cpu.platform];
+                            return (
+                              <th key={cpu.model} className="px-3 py-2.5 text-left min-w-[155px]">
+                                <div className="flex items-start justify-between gap-1">
+                                  <div>
+                                    <div className="text-[#e6edf3] font-bold text-[11px] leading-tight">{cpu.model}</div>
+                                    <span className={"text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 inline-block "+meta.style}>{meta.label}</span>
+                                  </div>
+                                  <button onClick={()=>toggleCompare(cpu.model)} className="text-[#484f58] hover:text-red-400 text-xs shrink-0 mt-0.5 transition-colors">✕</button>
+                                </div>
+                              </th>
+                            );
+                          })}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rowDefs.map(({i,numVal,lower,val})=>{
+                          const nums = numVal ? selCpus.map(c=>numVal(c)).filter(v=>v!=null) : [];
+                          const best = nums.length ? (lower?Math.min(...nums):Math.max(...nums)) : null;
+                          return (
+                            <tr key={i} className="border-b border-[#30363d] hover:bg-[#21262d]">
+                              <td className="px-3 py-2 text-[#6e7681] text-[10px] font-semibold uppercase tracking-wider sticky left-0 bg-[#161b22]">{T[lang].compareRows[i]}</td>
+                              {selCpus.map(cpu=>{
+                                const n = numVal ? numVal(cpu) : null;
+                                const isBest = best!==null && n===best;
+                                return (
+                                  <td key={cpu.model} className={"px-3 py-2 "+(isBest?"text-emerald-400 font-bold":"text-[#c9d1d9]")}>
+                                    {val(cpu)}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="px-3 py-2 border-t border-[#30363d] text-[10px] text-[#484f58] text-center">{T[lang].compareMax}</div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {/* Recommendations */}
-        <div className="bg-gray-900 border border-gray-700 rounded-xl p-3.5 mt-4">
-          <div className="text-gray-300 font-semibold text-sm mb-2">{T[lang].recTitle}</div>
-          <div className="space-y-1.5 text-xs text-gray-400">
+        <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-3.5 mt-4">
+          <div className="text-[#c9d1d9] font-semibold text-sm mb-2">{T[lang].recTitle}</div>
+          <div className="space-y-1.5 text-xs text-[#8b949e]">
             {T[lang].recs.map(({i,l,c,r})=>(
               <div key={l} className="flex gap-2">
                 <span className="shrink-0">{i}</span>
@@ -868,7 +976,7 @@ function App() {
           </div>
         </div>
 
-        <div className="text-[10px] text-gray-700 mt-3 text-center">
+        <div className="text-[10px] text-[#3d444d] mt-3 text-center">
           {T[lang].footer}
         </div>
       </div>
