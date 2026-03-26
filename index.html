@@ -330,7 +330,7 @@ const PLATFORM_META = {
   },
 };
 
-const APP_VERSION = "v64";
+const APP_VERSION = "v65";
 const PLATFORM_ORDER = ["LGA1200","LGA1700","LGA1851","X299_Intel","AM4","AM5","X399","TRX40","TRX50"];
 
 
@@ -420,14 +420,20 @@ function getCpuUrl(cpu) {
   if (["LGA1200","LGA1700","LGA1851","X299_Intel"].includes(platform)) {
     return INTEL_URLS[model] || null;
   }
-  // AMD Consumer (AM4, AM5)
+  // AMD Consumer
   if (platform === "AM4" || platform === "AM5") {
-    const m = model.match(/(\d{4})/);
-    if (m) {
-      const series = Math.floor(parseInt(m[1]) / 1000) * 1000;
-      const slug = "amd-" + model.toLowerCase().replace(/\s+/g, "-");
-      return `https://www.amd.com/en/products/processors/desktops/ryzen/${series}-series/${slug}.html`;
+    const slug = "amd-" + model.toLowerCase().replace(/\s+/g, "-");
+    // AM5 (Ryzen 7000+): neues URL-Schema mit Serienordner + .html
+    if (platform === "AM5") {
+      const m = model.match(/(\d{4})/);
+      if (m) {
+        const series = Math.floor(parseInt(m[1]) / 1000) * 1000;
+        return `https://www.amd.com/en/products/processors/desktops/ryzen/${series}-series/${slug}.html`;
+      }
     }
+    // AM4: Legacy-URLs — APUs (G/GE-Suffix) unter /apu/, alle anderen unter /cpu/
+    const isApu = /\d+GE?$/.test(model);
+    return `https://www.amd.com/en/products/${isApu ? "apu" : "cpu"}/${slug}`;
   }
   // AMD Threadripper (X399 = Gen1/2, TRX40 = Gen3, TRX50 = Gen7)
   if (platform === "X399" || platform === "TRX40" || platform === "TRX50") {
