@@ -330,7 +330,7 @@ const PLATFORM_META = {
   },
 };
 
-const APP_VERSION = "v58";
+const APP_VERSION = "v64";
 const PLATFORM_ORDER = ["LGA1200","LGA1700","LGA1851","X299_Intel","AM4","AM5","X399","TRX40","TRX50"];
 
 
@@ -350,6 +350,97 @@ const PLAT_LC = {
   great: {dot:"bg-purple-500",text:"text-purple-300",label:{de:"★ Sehr gut",                   en:"★ Excellent"}},
 };
 const VB = { medium:"border-yellow-900", good:"border-green-900", great:"border-purple-900" };
+
+const INTEL_URLS = {
+  // LGA1200: 10th Gen
+  "Core i5-10600K":  "https://ark.intel.com/content/www/us/en/ark/products/199311/intel-core-i510600k-processor-12m-cache-up-to-4-80-ghz.html",
+  "Core i5-10600KF": "https://ark.intel.com/content/www/us/en/ark/products/199315/intel-core-i510600kf-processor-12m-cache-up-to-4-80-ghz.html",
+  "Core i7-10700K":  "https://ark.intel.com/content/www/us/en/ark/products/199335/intel-core-i710700k-processor-16m-cache-up-to-5-10-ghz.html",
+  "Core i7-10700KF": "https://ark.intel.com/content/www/us/en/ark/products/199325/intel-core-i710700kf-processor-16m-cache-up-to-5-10-ghz.html",
+  "Core i9-10900K":  "https://ark.intel.com/content/www/us/en/ark/products/199332/intel-core-i910900k-processor-20m-cache-up-to-5-30-ghz.html",
+  "Core i9-10900KF": "https://ark.intel.com/content/www/us/en/ark/products/199331/intel-core-i910900kf-processor-20m-cache-up-to-5-30-ghz.html",
+  // LGA1200: 11th Gen
+  "Core i5-11600K":  "https://ark.intel.com/content/www/us/en/ark/products/212275/intel-core-i511600k-processor-12m-cache-up-to-4-90-ghz.html",
+  "Core i5-11600KF": "https://ark.intel.com/content/www/us/en/ark/products/212276/intel-core-i511600kf-processor-12m-cache-up-to-4-90-ghz.html",
+  "Core i7-11700K":  "https://ark.intel.com/content/www/us/en/ark/products/212047/intel-core-i711700k-processor-16m-cache-up-to-5-00-ghz.html",
+  "Core i7-11700KF": "https://ark.intel.com/content/www/us/en/ark/products/212048/intel-core-i711700kf-processor-16m-cache-up-to-5-00-ghz.html",
+  "Core i9-11900K":  "https://ark.intel.com/content/www/us/en/ark/products/212325/intel-core-i911900k-processor-16m-cache-up-to-5-30-ghz.html",
+  "Core i9-11900KF": "https://ark.intel.com/content/www/us/en/ark/products/212321/intel-core-i911900kf-processor-16m-cache-up-to-5-30-ghz.html",
+  // LGA1700: 12th Gen
+  "Core i5-12600K":  "https://ark.intel.com/content/www/us/en/ark/products/134589/intel-core-i512600k-processor-20m-cache-up-to-4-90-ghz.html",
+  "Core i5-12600KF": "https://ark.intel.com/content/www/us/en/ark/products/134590/intel-core-i512600kf-processor-20m-cache-up-to-4-90-ghz.html",
+  "Core i7-12700K":  "https://ark.intel.com/content/www/us/en/ark/products/134594/intel-core-i712700k-processor-25m-cache-up-to-5-00-ghz.html",
+  "Core i7-12700KF": "https://ark.intel.com/content/www/us/en/ark/products/134595/intel-core-i712700kf-processor-25m-cache-up-to-5-00-ghz.html",
+  "Core i9-12900K":  "https://ark.intel.com/content/www/us/en/ark/products/134599/intel-core-i9-12900k-processor-30m-cache-up-to-5-20-ghz.html",
+  "Core i9-12900KF": "https://ark.intel.com/content/www/us/en/ark/products/134600/intel-core-i912900kf-processor-30m-cache-up-to-5-20-ghz.html",
+  "Core i9-12900KS": "https://ark.intel.com/content/www/us/en/ark/products/225916/intel-core-i912900ks-processor-30m-cache-up-to-5-50-ghz.html",
+  // LGA1700: 13th Gen
+  "Core i5-13600K":  "https://ark.intel.com/content/www/us/en/ark/products/230493/intel-core-i513600k-processor-24m-cache-up-to-5-10-ghz.html",
+  "Core i5-13600KF": "https://ark.intel.com/content/www/us/en/ark/products/230494/intel-core-i5-13600kf-processor-24m-cache-up-to-5-10-ghz.html",
+  "Core i7-13700K":  "https://ark.intel.com/content/www/us/en/ark/products/230500/intel-core-i7-13700k-processor-30m-cache-up-to-5-40-ghz.html",
+  "Core i7-13700KF": "https://ark.intel.com/content/www/us/en/ark/products/230489/intel-core-i7-13700kf-processor-30m-cache-up-to-5-40-ghz.html",
+  "Core i9-13900K":  "https://ark.intel.com/content/www/us/en/ark/products/230496/intel-core-i9-13900k-processor-36m-cache-up-to-5-80-ghz.html",
+  "Core i9-13900KF": "https://ark.intel.com/content/www/us/en/ark/products/230497/intel-core-i9-13900kf-processor-36m-cache-up-to-5-80-ghz.html",
+  "Core i9-13900KS": "https://ark.intel.com/content/www/us/en/ark/products/232167/intel-core-i9-13900ks-processor-36m-cache-up-to-6-00-ghz.html",
+  // LGA1700: 14th Gen
+  "Core i5-14600K":  "https://ark.intel.com/content/www/us/en/ark/products/236799/intel-core-i5-processor-14600k-24m-cache-up-to-5-30-ghz.html",
+  "Core i5-14600KF": "https://ark.intel.com/content/www/us/en/ark/products/236778/intel-core-i5-processor-14600kf-24m-cache-up-to-5-30-ghz.html",
+  "Core i7-14700K":  "https://ark.intel.com/content/www/us/en/ark/products/236783/intel-core-i7-processor-14700k-33m-cache-up-to-5-60-ghz.html",
+  "Core i7-14700KF": "https://ark.intel.com/content/www/us/en/ark/products/236789/intel-core-i7-processor-14700kf-33m-cache-up-to-5-60-ghz.html",
+  "Core i9-14900K":  "https://ark.intel.com/content/www/us/en/ark/products/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz.html",
+  "Core i9-14900KF": "https://ark.intel.com/content/www/us/en/ark/products/236787/intel-core-i9-processor-14900kf-36m-cache-up-to-6-00-ghz.html",
+  "Core i9-14900KS": "https://ark.intel.com/content/www/us/en/ark/products/237504/intel-core-i9-processor-14900ks-36m-cache-up-to-6-20-ghz.html",
+  // LGA1851: Arrow Lake
+  "Core Ultra 5 245K":      "https://ark.intel.com/content/www/us/en/ark/products/241067/intel-core-ultra-5-processor-245k-24m-cache-up-to-5-20-ghz.html",
+  "Core Ultra 5 245KF":     "https://ark.intel.com/content/www/us/en/ark/products/241066/intel-core-ultra-5-processor-245kf-24m-cache-up-to-5-20-ghz.html",
+  "Core Ultra 7 265K":      "https://ark.intel.com/content/www/us/en/ark/products/241063/intel-core-ultra-7-processor-265k-30m-cache-up-to-5-50-ghz.html",
+  "Core Ultra 7 265KF":     "https://ark.intel.com/content/www/us/en/ark/products/241062/intel-core-ultra-7-processor-265kf-30m-cache-up-to-5-50-ghz.html",
+  "Core Ultra 9 285K":      "https://ark.intel.com/content/www/us/en/ark/products/241060/intel-core-ultra-9-processor-285k-36m-cache-up-to-5-70-ghz.html",
+  // LGA1851: Arrow Lake Plus
+  "Core Ultra 5 250K Plus": "https://ark.intel.com/content/www/us/en/ark/products/245694/intel-core-ultra-5-processor-250k-plus-30m-cache-up-to-5-30-ghz.html",
+  "Core Ultra 7 270K Plus": "https://ark.intel.com/content/www/us/en/ark/products/245692/intel-core-ultra-7-processor-270k-plus-36m-cache-up-to-5-50-ghz.html",
+  // X299: Skylake-X
+  "Core i7-7800X":  "https://ark.intel.com/content/www/us/en/ark/products/123589/intel-core-i77800x-xseries-processor-8-25m-cache-up-to-4-00-ghz.html",
+  "Core i7-7820X":  "https://ark.intel.com/content/www/us/en/ark/products/123767/intel-core-i77820x-xseries-processor-11m-cache-up-to-4-30-ghz.html",
+  "Core i9-7900X":  "https://ark.intel.com/content/www/us/en/ark/products/123613/intel-core-i97900x-xseries-processor-13-75m-cache-up-to-4-30-ghz.html",
+  "Core i9-7920X":  "https://ark.intel.com/content/www/us/en/ark/products/126240/intel-core-i9-7920x-x-series-processor-16-5m-cache-up-to-4-30-ghz.html",
+  "Core i9-7940X":  "https://ark.intel.com/content/www/us/en/ark/products/126695/intel-core-i97940x-xseries-processor-19-25m-cache-up-to-4-30-ghz.html",
+  "Core i9-7960X":  "https://ark.intel.com/content/www/us/en/ark/products/126697/intel-core-i97960x-xseries-processor-22m-cache-up-to-4-20-ghz.html",
+  "Core i9-7980XE": "https://ark.intel.com/content/www/us/en/ark/products/126699/intel-core-i97980xe-extreme-edition-processor-24-75m-cache-up-to-4-20-ghz.html",
+  // X299: Cascade Lake-X
+  "Core i9-10900X":  "https://ark.intel.com/content/www/us/en/ark/products/198019/intel-core-i910900x-xseries-processor-19-25m-cache-3-70-ghz.html",
+  "Core i9-10920X":  "https://ark.intel.com/content/www/us/en/ark/products/198012/intel-core-i910920x-xseries-processor-19-25m-cache-3-50-ghz.html",
+  "Core i9-10940X":  "https://ark.intel.com/content/www/us/en/ark/products/198014/intel-core-i910940x-xseries-processor-19-25m-cache-3-30-ghz.html",
+  "Core i9-10980XE": "https://ark.intel.com/content/www/us/en/ark/products/198017/intel-core-i910980xe-extreme-edition-processor-24-75m-cache-3-00-ghz.html",
+};
+
+function getCpuUrl(cpu) {
+  const { model, platform } = cpu;
+  // Intel – direkte ARK-Produktseiten
+  if (["LGA1200","LGA1700","LGA1851","X299_Intel"].includes(platform)) {
+    return INTEL_URLS[model] || null;
+  }
+  // AMD Consumer (AM4, AM5)
+  if (platform === "AM4" || platform === "AM5") {
+    const m = model.match(/(\d{4})/);
+    if (m) {
+      const series = Math.floor(parseInt(m[1]) / 1000) * 1000;
+      const slug = "amd-" + model.toLowerCase().replace(/\s+/g, "-");
+      return `https://www.amd.com/en/products/processors/desktops/ryzen/${series}-series/${slug}.html`;
+    }
+  }
+  // AMD Threadripper (X399 = Gen1/2, TRX40 = Gen3, TRX50 = Gen7)
+  if (platform === "X399" || platform === "TRX40" || platform === "TRX50") {
+    const parts = model.split(" ");
+    const num = parts[parts.length - 1];
+    const m = num.match(/(\d{4})/);
+    if (m) {
+      const series = Math.floor(parseInt(m[1]) / 1000) * 1000;
+      return `https://www.amd.com/en/products/processors/workstations/ryzen-threadripper/${series}-series/amd-ryzen-threadripper-${num.toLowerCase()}.html`;
+    }
+  }
+  return null;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 function App() {
@@ -761,6 +852,7 @@ function App() {
                         {genCpus.map(cpu=>{
                           const pc=PC[cpu.priceRating]; const llm=LC[cpu.llmRating];
                           const isOpen=expanded===cpu.model; const curTab=getTab(cpu.model);
+                          const cpuUrl=getCpuUrl(cpu);
                           return (
                             <div key={cpu.model} className="bg-[#161b22]/60 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
                               <button className="w-full text-left px-3 py-3.5 flex items-center gap-2.5 hover:bg-[#21262d] transition-colors"
@@ -803,6 +895,14 @@ function App() {
                                         {icon}{label}
                                       </button>
                                     ))}
+                                  {cpuUrl && (
+                                    <a href={cpuUrl} target="_blank" rel="noopener noreferrer"
+                                      className="flex items-center gap-1.5 px-3 py-2.5 text-[10px] text-[#484f58] hover:text-[#58a6ff] transition-colors shrink-0 border-l border-[#30363d]"
+                                      title={["LGA1200","LGA1700","LGA1851","X299_Intel"].includes(cpu.platform)?"Intel ARK":"AMD Produktseite"}>
+                                      <svg viewBox="0 0 16 16" width="10" height="10" fill="currentColor"><path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z"/></svg>
+                                      {lang==="de"?"Produktseite":"Product Page"}
+                                    </a>
+                                  )}
                                   </div>
                                   {curTab==="specs" && (
                                     <div className="px-3 pb-3 pt-2.5 space-y-2">
