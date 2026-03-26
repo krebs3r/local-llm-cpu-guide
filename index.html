@@ -26,6 +26,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
   <!-- Babel Standalone (JSX transpiler) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.25.6/babel.min.js"></script>
+  <!-- html2canvas (PNG export) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     body { margin: 0; background-color: #0d1117; }
     * { box-sizing: border-box; }
@@ -34,7 +36,7 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-    const { useState, useMemo } = React;
+    const { useState, useMemo, useEffect, useRef } = React;
 
 // ─── i18n ─────────────────────────────────────────────────────────────────────
 const T = {
@@ -49,6 +51,9 @@ const T = {
     compareTitle:   "CPU-Vergleich",
     compareEmpty:   "Wähle bis zu 4 CPUs aus der CPU-Liste zum Vergleichen aus.",
     compareClear:   "Alle entfernen",
+    shareBtn:       "Link teilen",
+    shareCopied:    "Kopiert!",
+    exportBtn:      "Als PNG",
     compareMax:     "Max. 4 CPUs gleichzeitig vergleichbar.",
     compareSpec:    "Eigenschaft",
     compareRows:    ["Erschienen","UVP (Launch)","Kerne / Threads","Takt (GHz)","TDP","PCIe","RAM","Preis (Gebraucht)","CB R23 Single","CB R23 Multi","CB R24 Single","CB R24 Multi","LLM-Eignung"],
@@ -96,6 +101,9 @@ const T = {
     compareTitle:   "CPU Comparison",
     compareEmpty:   "Select up to 4 CPUs from the CPU list to compare.",
     compareClear:   "Clear all",
+    shareBtn:       "Share Link",
+    shareCopied:    "Copied!",
+    exportBtn:      "Export PNG",
     compareMax:     "Max. 4 CPUs can be compared at once.",
     compareSpec:    "Property",
     compareRows:    ["Released","MSRP (Launch)","Cores / Threads","Clock (GHz)","TDP","PCIe","RAM","Price (Used)","CB R23 Single","CB R23 Multi","CB R24 Single","CB R24 Multi","LLM Suitability"],
@@ -309,6 +317,7 @@ const PLATFORM_META = {
   },
 };
 
+const APP_VERSION = "v10";
 const PLATFORM_ORDER = ["LGA1200","LGA1700","LGA1851","X299_Intel","AM4","AM5","X399","TRX40","TRX50"];
 
 // ─── CPU Launch data (MSRP & Release date) ────────────────────────────────────
@@ -647,14 +656,24 @@ const VB = { medium:"border-yellow-900", good:"border-green-900", great:"border-
 
 // ─── Component ────────────────────────────────────────────────────────────────
 function App() {
-  const [view, setView]         = useState("platform");
+  const [view, setView]         = useState(()=>{
+    const p = new URLSearchParams(window.location.search);
+    return p.get("compare") ? "compare" : "platform";
+  });
   const [platOpen, setPlatOpen] = useState({});
   const [filter, setFilter]     = useState("Alle");
   const [genFilter, setGenFilter] = useState("Alle");
   const [expanded, setExpanded] = useState(null);
   const [cpuTab, setCpuTab]     = useState({});
   const [lang, setLang]         = useState("de");
-  const [compareList, setCompareList] = useState([]);
+  const [compareList, setCompareList] = useState(()=>{
+    const p = new URLSearchParams(window.location.search);
+    const raw = p.get("compare");
+    if (!raw) return [];
+    return raw.split(",").map(m=>decodeURIComponent(m)).filter(m=>cpus.find(c=>c.model===m));
+  });
+  const [copied, setCopied]     = useState(false);
+  const compareTableRef         = useRef(null);
 
   const togglePlat = p => setPlatOpen(prev => ({...prev,[p]:!prev[p]}));
   const getTab = m => cpuTab[m]||"specs";
@@ -662,6 +681,80 @@ function App() {
   const toggleCompare = m => setCompareList(prev=>
     prev.includes(m) ? prev.filter(x=>x!==m) : prev.length<4 ? [...prev,m] : prev
   );
+
+  useEffect(()=>{
+    const url = new URL(window.location.href);
+    if (compareList.length>0) {
+      url.searchParams.set("compare", compareList.map(m=>encodeURIComponent(m)).join(","));
+    } else {
+      url.searchParams.delete("compare");
+    }
+    window.history.replaceState({}, "", url);
+  }, [compareList]);
+
+  const shareCompare = () => {
+    navigator.clipboard.writeText(window.location.href).then(()=>{
+      setCopied(true);
+      setTimeout(()=>setCopied(false), 2000);
+    });
+  };
+
+  const exportPng = () => {
+    if (!compareTableRef.current) return;
+    const el = compareTableRef.current;
+
+    // Clone off-screen so we can freely modify styles for html2canvas
+    const clone = el.cloneNode(true);
+    clone.style.position  = "fixed";
+    clone.style.top       = "0";
+    clone.style.left      = "-9999px";
+    clone.style.overflow  = "visible";
+    clone.style.width     = "820px";
+    clone.style.minWidth  = "820px";
+    document.body.appendChild(clone);
+    const cloneInner = clone.querySelector("div");
+    if (cloneInner) cloneInner.style.overflow = "visible";
+
+    // Badges im Export: Hintergrund entfernen, nur Text
+    clone.querySelectorAll(".compare-badge").forEach(b => {
+      b.style.background = "none";
+      b.style.padding    = "0";
+      b.style.fontSize   = "10px";
+      b.style.color      = "#8b949e";
+    });
+
+    html2canvas(clone, {
+      backgroundColor: "#161b22",
+      scale: 1.5,
+      useCORS: true,
+      logging: false,
+    }).then(canvas=>{
+      document.body.removeChild(clone);
+      // Wasserzeichen – zentriert, diagonal
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // Transform von html2canvas zurücksetzen
+      const wm = "krebs3r.github.io/local-llm-cpu-guide";
+      const fontSize = Math.max(20, Math.round(Math.min(canvas.width, canvas.height) * 0.03));
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(-Math.PI / 8);
+      ctx.font = `bold ${fontSize}px monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,0.13)";
+      ctx.fillText(wm, 0, 0);
+      ctx.restore();
+      const names = compareList
+        .map(m=>m.replace(/\s+/g,"-").replace(/[^a-zA-Z0-9\-]/g,""))
+        .join("_vs_");
+      const link = document.createElement("a");
+      link.download = "cpu-compare_"+names+".png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }).catch(()=>{
+      document.body.removeChild(clone);
+    });
+  };
 
   const gens = useMemo(()=>{
     const src = filter==="Alle" ? cpus : cpus.filter(c=>c.platform===filter);
@@ -707,6 +800,7 @@ function App() {
             className="ml-5 mt-1 inline-flex items-center gap-1.5 text-[10px] text-[#484f58] hover:text-[#8b949e] transition-colors">
             <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
             github.com/krebs3r/local-llm-cpu-guide
+            <span className="font-mono text-[#484f58]">· {APP_VERSION}</span>
           </a>
         </div>
 
@@ -1058,7 +1152,22 @@ function App() {
             <div className="flex items-center justify-between mb-3">
               <div className="text-sm font-semibold text-[#e6edf3]">{T[lang].compareTitle}</div>
               {compareList.length>0 && (
-                <button onClick={()=>setCompareList([])} className="text-xs text-[#6e7681] hover:text-red-400 transition-colors">{T[lang].compareClear}</button>
+                <div className="flex items-center gap-2">
+                  <button onClick={shareCompare}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all ${copied?"bg-emerald-900 border-emerald-700 text-emerald-300":"bg-[#21262d] border-[#30363d] text-[#8b949e] hover:border-[#58a6ff] hover:text-[#58a6ff]"}`}>
+                    {copied ? (
+                      <><svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>{T[lang].shareCopied}</>
+                    ) : (
+                      <><svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2ZM2.5 2.5h2.25a.75.75 0 0 0 0-1.5H2A1.5 1.5 0 0 0 .5 2.5v2.25a.75.75 0 0 0 1.5 0V2.5Zm11 0V4.75a.75.75 0 0 0 1.5 0V2A1.5 1.5 0 0 0 13.5.5h-2.25a.75.75 0 0 0 0 1.5H13.5Zm0 11h-2.25a.75.75 0 0 0 0 1.5H13.5A1.5 1.5 0 0 0 15 13.5v-2.25a.75.75 0 0 0-1.5 0V13.5ZM2.5 11.25a.75.75 0 0 0-1.5 0V13.5A1.5 1.5 0 0 0 2.5 15h2.25a.75.75 0 0 0 0-1.5H2.5v-2.25Z"/></svg>{T[lang].shareBtn}</>
+                    )}
+                  </button>
+                  <button onClick={exportPng}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border bg-[#21262d] border-[#30363d] text-[#8b949e] hover:border-[#3fb950] hover:text-[#3fb950] transition-all">
+                    <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"/><path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.97a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.779a.749.749 0 1 1 1.06-1.06l1.97 1.97Z"/></svg>
+                    {T[lang].exportBtn}
+                  </button>
+                  <button onClick={()=>setCompareList([])} className="text-xs text-[#6e7681] hover:text-red-400 transition-colors">{T[lang].compareClear}</button>
+                </div>
               )}
             </div>
             {compareList.length===0 ? (
@@ -1086,7 +1195,7 @@ function App() {
                 {i:12,numVal:null,          lower:false, val:c=>LC[c.llmRating].label[lang]},
               ];
               return (
-                <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
+                <div ref={compareTableRef} className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
@@ -1095,13 +1204,13 @@ function App() {
                           {selCpus.map(cpu=>{
                             const meta=PLATFORM_META[cpu.platform];
                             return (
-                              <th key={cpu.model} className="px-3 py-2.5 text-left min-w-[155px]">
-                                <div className="flex items-start justify-between gap-1">
-                                  <div>
-                                    <div className="text-[#e6edf3] font-bold text-[11px] leading-tight">{cpu.model}</div>
-                                    <span className={"text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 inline-block "+meta.style}>{meta.label}</span>
+                              <th key={cpu.model} className="px-3 pt-3 pb-2.5 text-left min-w-[155px] align-bottom">
+                                <div className="flex items-end justify-between gap-1">
+                                  <div className="flex flex-col gap-1 items-start">
+                                    <span className={"compare-badge rounded font-bold "+meta.style} style={{display:"inline-block",padding:"4px 7px",fontSize:"9px",lineHeight:"1",whiteSpace:"nowrap"}}>{meta.label}</span>
+                                    <div className="text-[#e6edf3] font-bold text-[12px] leading-snug">{cpu.model}</div>
                                   </div>
-                                  <button onClick={()=>toggleCompare(cpu.model)} className="text-[#484f58] hover:text-red-400 text-xs shrink-0 mt-0.5 transition-colors">✕</button>
+                                  <button onClick={()=>toggleCompare(cpu.model)} className="text-[#484f58] hover:text-red-400 text-xs shrink-0 mb-0.5 transition-colors">✕</button>
                                 </div>
                               </th>
                             );
