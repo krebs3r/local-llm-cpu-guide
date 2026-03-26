@@ -1,10 +1,17 @@
 # CPU Platform Comparison – PCIe Lanes & LLM Multi-GPU
 
-An interactive overview of **120+ AMD and Intel desktop CPUs** across all major platforms, with a focus on PCIe lane counts, multi-GPU configurations, and suitability for running **local Large Language Models (LLMs)**.
+An interactive overview of **125+ AMD and Intel desktop CPUs** across all major platforms, with a focus on PCIe lane counts, multi-GPU configurations, and suitability for running **local Large Language Models (LLMs)**.
 
-### ⚡ Usage – No Build Required
+### Usage
 
-Download **[index.html](./index.html)** and open it directly in any browser. No installation, no build step, no server needed.
+Clone or download the repo and open `index.html` in any browser. Both files are required:
+
+```
+index.html   – app
+cpus.js      – CPU data
+```
+
+No installation, no build step, no server needed.
 
 Or use the live demo:
 
@@ -27,19 +34,20 @@ Or use the live demo:
 ### Features
 
 - **Platform overview** with chipset-level dual/triple GPU configuration details
-- **CPU list** with filterable platform and generation selectors
+- **CPU list** with filterable platform, generation, and search
 - **CPU comparison** – select up to 4 CPUs and compare specs side-by-side (cores, clock, TDP, PCIe, Cinebench, price, LLM rating), with best values highlighted
 - **URL sharing** – comparison state is encoded in the URL, shareable via copy-link button
-- **PNG export** – export the comparison table as a PNG image (fixed width regardless of CPU count)
-- **Launch MSRP & release date** for all 128 CPUs
+- **PNG export** – export the comparison table as a PNG image
+- **Official product page links** – every CPU links directly to AMD product pages or Intel ARK
+- **Launch MSRP & release date** for all 125 CPUs
 - **LLM suitability rating** for every CPU (single GPU → triple GPU use cases)
 - **Cinebench R23 & R24** single-core and multi-core scores for 120+ CPUs
 - **iGPU info** for CPUs with integrated graphics (architecture, EU/CU count, clock, API support)
 - **Estimated used market prices** (March 2026, German market) with color-coded price tiers
 - **GE / low-TDP variants** included for energy-efficient builds
+- **Touch-friendly design** – optimized for mobile and tablet
+- **Glassmorphism UI** with dark mode and subtle background gradients
 - **DE / EN** language toggle
-- **GitHub dark mode** UI design
-- **Version badge** displayed next to the GitHub link
 
 ### Why PCIe lanes matter for LLMs
 
@@ -53,6 +61,8 @@ Running large language models locally typically requires a dedicated GPU with si
 
 Pull requests are welcome! If you spot incorrect specs, missing CPUs, or outdated prices, feel free to open an issue or PR.
 
+CPU data lives in `cpus.js` – easy to edit without touching the app logic.
+
 **What to contribute:**
 - Corrected or updated CPU specs / prices
 - Missing CPU models (e.g. Xeon, Ryzen Pro, older generations)
@@ -60,7 +70,8 @@ Pull requests are welcome! If you spot incorrect specs, missing CPUs, or outdate
 
 ### Tech
 
-Single-file HTML app. React 18 + Tailwind CSS, loaded via CDN. No build step, no dependencies.
+- `index.html` – React 18 + Tailwind CSS via CDN, no build step
+- `cpus.js` – all CPU specs, benchmark scores, LLM ratings and launch data as plain JS
 
 ---
 
