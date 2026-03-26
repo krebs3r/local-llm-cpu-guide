@@ -51,7 +51,7 @@ const T = {
     compareClear:   "Alle entfernen",
     compareMax:     "Max. 4 CPUs gleichzeitig vergleichbar.",
     compareSpec:    "Eigenschaft",
-    compareRows:    ["Kerne / Threads","Takt (GHz)","TDP","PCIe","RAM","Preis (Gebraucht)","CB R23 Single","CB R23 Multi","CB R24 Single","CB R24 Multi","LLM-Eignung"],
+    compareRows:    ["Erschienen","UVP (Launch)","Kerne / Threads","Takt (GHz)","TDP","PCIe","RAM","Preis (Gebraucht)","CB R23 Single","CB R23 Multi","CB R24 Single","CB R24 Multi","LLM-Eignung"],
     infoCards: [
       {t:"Single GPU", d:"Alle Plattformen. x4–x16 reicht für Inference."},
       {t:"Dual GPU",   d:"Consumer: max. x8/x8. HEDT (44+ Lanes): x16/x16."},
@@ -98,7 +98,7 @@ const T = {
     compareClear:   "Clear all",
     compareMax:     "Max. 4 CPUs can be compared at once.",
     compareSpec:    "Property",
-    compareRows:    ["Cores / Threads","Clock (GHz)","TDP","PCIe","RAM","Price (Used)","CB R23 Single","CB R23 Multi","CB R24 Single","CB R24 Multi","LLM Suitability"],
+    compareRows:    ["Released","MSRP (Launch)","Cores / Threads","Clock (GHz)","TDP","PCIe","RAM","Price (Used)","CB R23 Single","CB R23 Multi","CB R24 Single","CB R24 Multi","LLM Suitability"],
     infoCards: [
       {t:"Single GPU", d:"All platforms. x4–x16 is sufficient for inference."},
       {t:"Dual GPU",   d:"Consumer: max. x8/x8. HEDT (44+ lanes): x16/x16."},
@@ -310,6 +310,167 @@ const PLATFORM_META = {
 };
 
 const PLATFORM_ORDER = ["LGA1200","LGA1700","LGA1851","X299_Intel","AM4","AM5","X399","TRX40","TRX50"];
+
+// ─── CPU Launch data (MSRP & Release date) ────────────────────────────────────
+const CPU_LAUNCH = {
+  // ── Intel LGA1200 – Comet Lake (10th Gen, Mai 2020) ──────────────────────
+  "Core i5-10600K":    { msrp:"$262",   released:"Mai 2020" },
+  "Core i5-10600KF":   { msrp:"$237",   released:"Mai 2020" },
+  "Core i7-10700K":    { msrp:"$374",   released:"Mai 2020" },
+  "Core i7-10700KF":   { msrp:"$349",   released:"Mai 2020" },
+  "Core i9-10900K":    { msrp:"$488",   released:"Mai 2020" },
+  "Core i9-10900KF":   { msrp:"$472",   released:"Mai 2020" },
+  // ── Intel LGA1200 – Rocket Lake (11th Gen, Mär 2021) ─────────────────────
+  "Core i5-11600K":    { msrp:"$262",   released:"Mär 2021" },
+  "Core i5-11600KF":   { msrp:"$237",   released:"Mär 2021" },
+  "Core i7-11700K":    { msrp:"$399",   released:"Mär 2021" },
+  "Core i7-11700KF":   { msrp:"$374",   released:"Mär 2021" },
+  "Core i9-11900K":    { msrp:"$539",   released:"Mär 2021" },
+  "Core i9-11900KF":   { msrp:"$513",   released:"Mär 2021" },
+  // ── Intel LGA1700 – Alder Lake (12th Gen, Nov 2021) ──────────────────────
+  "Core i5-12600K":    { msrp:"$289",   released:"Nov 2021" },
+  "Core i5-12600KF":   { msrp:"$264",   released:"Nov 2021" },
+  "Core i7-12700K":    { msrp:"$409",   released:"Nov 2021" },
+  "Core i7-12700KF":   { msrp:"$384",   released:"Nov 2021" },
+  "Core i9-12900K":    { msrp:"$589",   released:"Nov 2021" },
+  "Core i9-12900KF":   { msrp:"$564",   released:"Nov 2021" },
+  "Core i9-12900KS":   { msrp:"$739",   released:"Apr 2022" },
+  // ── Intel LGA1700 – Raptor Lake (13th Gen, Okt 2022) ─────────────────────
+  "Core i5-13600K":    { msrp:"$319",   released:"Okt 2022" },
+  "Core i5-13600KF":   { msrp:"$296",   released:"Okt 2022" },
+  "Core i7-13700K":    { msrp:"$409",   released:"Okt 2022" },
+  "Core i7-13700KF":   { msrp:"$384",   released:"Okt 2022" },
+  "Core i9-13900K":    { msrp:"$589",   released:"Okt 2022" },
+  "Core i9-13900KF":   { msrp:"$564",   released:"Okt 2022" },
+  "Core i9-13900KS":   { msrp:"$699",   released:"Jan 2023" },
+  // ── Intel LGA1700 – Raptor Lake Refresh (14th Gen, Okt 2023) ─────────────
+  "Core i5-14600K":    { msrp:"$319",   released:"Okt 2023" },
+  "Core i5-14600KF":   { msrp:"$294",   released:"Okt 2023" },
+  "Core i7-14700K":    { msrp:"$409",   released:"Okt 2023" },
+  "Core i7-14700KF":   { msrp:"$384",   released:"Okt 2023" },
+  "Core i9-14900K":    { msrp:"$589",   released:"Okt 2023" },
+  "Core i9-14900KF":   { msrp:"$564",   released:"Okt 2023" },
+  "Core i9-14900KS":   { msrp:"$699",   released:"Mär 2024" },
+  // ── Intel LGA1851 – Arrow Lake (Core Ultra 200S, Okt 2024) ───────────────
+  "Core Ultra 5 245K":  { msrp:"$309",  released:"Okt 2024" },
+  "Core Ultra 5 245KF": { msrp:"$294",  released:"Okt 2024" },
+  "Core Ultra 7 265K":  { msrp:"$394",  released:"Okt 2024" },
+  "Core Ultra 7 265KF": { msrp:"$379",  released:"Okt 2024" },
+  "Core Ultra 9 285K":  { msrp:"$589",  released:"Okt 2024" },
+  // ── Intel LGA1851 – Arrow Lake Refresh (Feb 2025) ────────────────────────
+  "Core Ultra 5 250K Plus": { msrp:"$299", released:"Feb 2025" },
+  "Core Ultra 7 270K Plus": { msrp:"$394", released:"Feb 2025" },
+  // ── Intel X299 – Skylake-X (Jun / Aug 2017) ───────────────────────────────
+  "Core i7-7800X":     { msrp:"$389",   released:"Jun 2017" },
+  "Core i7-7820X":     { msrp:"$599",   released:"Jun 2017" },
+  "Core i9-7900X":     { msrp:"$999",   released:"Jun 2017" },
+  "Core i9-7920X":     { msrp:"$1.189", released:"Aug 2017" },
+  "Core i9-7940X":     { msrp:"$1.399", released:"Aug 2017" },
+  "Core i9-7960X":     { msrp:"$1.699", released:"Aug 2017" },
+  "Core i9-7980XE":    { msrp:"$1.999", released:"Aug 2017" },
+  // ── Intel X299 – Cascade Lake-X (Nov 2019) ───────────────────────────────
+  "Core i9-10900X":    { msrp:"$590",   released:"Nov 2019" },
+  "Core i9-10920X":    { msrp:"$689",   released:"Nov 2019" },
+  "Core i9-10940X":    { msrp:"$784",   released:"Nov 2019" },
+  "Core i9-10960X":    { msrp:"$979",   released:"Nov 2019" },
+  "Core i9-10980XE":   { msrp:"$979",   released:"Nov 2019" },
+  // ── AMD AM4 – Ryzen 1000 (Zen, Mär / Apr 2017) ───────────────────────────
+  "Ryzen 7 1700":      { msrp:"$329",   released:"Mär 2017" },
+  "Ryzen 7 1700X":     { msrp:"$399",   released:"Mär 2017" },
+  "Ryzen 7 1800X":     { msrp:"$499",   released:"Mär 2017" },
+  "Ryzen 5 1600":      { msrp:"$220",   released:"Apr 2017" },
+  "Ryzen 5 1600X":     { msrp:"$250",   released:"Apr 2017" },
+  // ── AMD AM4 – Ryzen 2000 (Zen+, Apr 2018) ────────────────────────────────
+  "Ryzen 5 2600":      { msrp:"$199",   released:"Apr 2018" },
+  "Ryzen 5 2600X":     { msrp:"$229",   released:"Apr 2018" },
+  "Ryzen 7 2700":      { msrp:"$299",   released:"Apr 2018" },
+  "Ryzen 7 2700X":     { msrp:"$329",   released:"Apr 2018" },
+  // ── AMD AM4 – Raven Ridge APU (Zen+, Feb 2018) ───────────────────────────
+  "Ryzen 3 2200G":     { msrp:"$99",    released:"Feb 2018" },
+  "Ryzen 3 2200GE":    { msrp:"$99",    released:"Feb 2018" },
+  "Ryzen 5 2400G":     { msrp:"$169",   released:"Feb 2018" },
+  "Ryzen 5 2400GE":    { msrp:"$149",   released:"Feb 2018" },
+  // ── AMD AM4 – Ryzen 3000 (Zen 2, Jul 2019) ───────────────────────────────
+  "Ryzen 5 3600":      { msrp:"$199",   released:"Jul 2019" },
+  "Ryzen 5 3600X":     { msrp:"$249",   released:"Jul 2019" },
+  "Ryzen 7 3700X":     { msrp:"$329",   released:"Jul 2019" },
+  "Ryzen 7 3800X":     { msrp:"$399",   released:"Jul 2019" },
+  "Ryzen 9 3900X":     { msrp:"$499",   released:"Jul 2019" },
+  "Ryzen 9 3950X":     { msrp:"$749",   released:"Nov 2019" },
+  // ── AMD AM4 – Picasso APU (Zen+, Jul 2019) ───────────────────────────────
+  "Ryzen 3 3200G":     { msrp:"$99",    released:"Jul 2019" },
+  "Ryzen 3 3200GE":    { msrp:"$99",    released:"Jul 2019" },
+  "Ryzen 5 3400G":     { msrp:"$149",   released:"Jul 2019" },
+  "Ryzen 5 3400GE":    { msrp:"$149",   released:"Jul 2019" },
+  // ── AMD AM4 – Renoir APU (Zen 2, OEM 2020) ───────────────────────────────
+  "Ryzen 3 4300GE":    { msrp:"OEM",    released:"Jul 2020" },
+  "Ryzen 5 4600G":     { msrp:"OEM",    released:"Jul 2020" },
+  "Ryzen 5 4600GE":    { msrp:"OEM",    released:"Jul 2020" },
+  "Ryzen 7 4700G":     { msrp:"OEM",    released:"Jul 2020" },
+  "Ryzen 7 4700GE":    { msrp:"OEM",    released:"Jul 2020" },
+  // ── AMD AM4 – Ryzen 5000 (Zen 3, Nov 2020) ───────────────────────────────
+  "Ryzen 5 5600X":     { msrp:"$299",   released:"Nov 2020" },
+  "Ryzen 7 5800X":     { msrp:"$449",   released:"Nov 2020" },
+  "Ryzen 9 5900X":     { msrp:"$549",   released:"Nov 2020" },
+  "Ryzen 9 5950X":     { msrp:"$799",   released:"Nov 2020" },
+  // ── AMD AM4 – Cezanne APU (Zen 3, Aug 2021 DIY) ─────────────────────────
+  "Ryzen 5 5600G":     { msrp:"$259",   released:"Aug 2021" },
+  "Ryzen 5 5600GE":    { msrp:"OEM",    released:"Jan 2021" },
+  "Ryzen 7 5700G":     { msrp:"$359",   released:"Aug 2021" },
+  "Ryzen 7 5700GE":    { msrp:"OEM",    released:"Jan 2021" },
+  "Ryzen 9 5900GE":    { msrp:"OEM",    released:"Jan 2021" },
+  // ── AMD AM4 – Ryzen 5000 Refresh (Apr 2022) ──────────────────────────────
+  "Ryzen 5 5600":      { msrp:"$199",   released:"Apr 2022" },
+  "Ryzen 7 5700X":     { msrp:"$299",   released:"Apr 2022" },
+  "Ryzen 7 5800X3D":   { msrp:"$449",   released:"Apr 2022" },
+  // ── AMD AM5 – Ryzen 7000 (Zen 4, Sep 2022) ───────────────────────────────
+  "Ryzen 5 7600X":     { msrp:"$299",   released:"Sep 2022" },
+  "Ryzen 7 7700X":     { msrp:"$399",   released:"Sep 2022" },
+  "Ryzen 9 7900X":     { msrp:"$549",   released:"Sep 2022" },
+  "Ryzen 9 7950X":     { msrp:"$699",   released:"Sep 2022" },
+  "Ryzen 5 7600":      { msrp:"$229",   released:"Jan 2023" },
+  "Ryzen 7 7700":      { msrp:"$329",   released:"Jan 2023" },
+  "Ryzen 9 7900":      { msrp:"$429",   released:"Jan 2023" },
+  // ── AMD AM5 – Ryzen 7000X3D (Zen 4, Feb / Apr 2023) ─────────────────────
+  "Ryzen 9 7950X3D":   { msrp:"$699",   released:"Feb 2023" },
+  "Ryzen 9 7900X3D":   { msrp:"$599",   released:"Feb 2023" },
+  "Ryzen 7 7800X3D":   { msrp:"$449",   released:"Apr 2023" },
+  // ── AMD AM5 – Ryzen 8000G APU (Zen 4, Jan 2024) ──────────────────────────
+  "Ryzen 5 8500G":     { msrp:"$179",   released:"Jan 2024" },
+  "Ryzen 5 8600G":     { msrp:"$229",   released:"Jan 2024" },
+  "Ryzen 5 8600GE":    { msrp:"OEM",    released:"Jan 2024" },
+  "Ryzen 7 8700G":     { msrp:"$329",   released:"Jan 2024" },
+  "Ryzen 7 8700GE":    { msrp:"OEM",    released:"Jan 2024" },
+  // ── AMD AM5 – Ryzen 9000 (Zen 5, Aug 2024) ───────────────────────────────
+  "Ryzen 5 9600X":     { msrp:"$279",   released:"Aug 2024" },
+  "Ryzen 7 9700X":     { msrp:"$359",   released:"Aug 2024" },
+  "Ryzen 9 9900X":     { msrp:"$499",   released:"Aug 2024" },
+  "Ryzen 9 9950X":     { msrp:"$649",   released:"Aug 2024" },
+  "Ryzen 7 9700GE":    { msrp:"OEM",    released:"Jan 2025" },
+  "Ryzen 9 9900GE":    { msrp:"OEM",    released:"Jan 2025" },
+  // ── AMD AM5 – Ryzen 9000X3D (Zen 5, Nov 2024 – Mär 2025) ────────────────
+  "Ryzen 7 9800X3D":   { msrp:"$479",   released:"Nov 2024" },
+  "Ryzen 9 9900X3D":   { msrp:"$599",   released:"Mär 2025" },
+  "Ryzen 9 9950X3D":   { msrp:"$699",   released:"Mär 2025" },
+  "Ryzen 7 9850X3D":   { msrp:"$499",   released:"Jan 2026" },
+  // ── AMD X399 – Threadripper 1000 (Zen, Aug 2017) ─────────────────────────
+  "Ryzen TR 1900X":    { msrp:"$549",   released:"Aug 2017" },
+  "Ryzen TR 1920X":    { msrp:"$799",   released:"Aug 2017" },
+  "Ryzen TR 1950X":    { msrp:"$999",   released:"Aug 2017" },
+  // ── AMD X399 – Threadripper 2000 (Zen+, Aug / Okt 2018) ──────────────────
+  "Ryzen TR 2920X":    { msrp:"$649",   released:"Okt 2018" },
+  "Ryzen TR 2950X":    { msrp:"$899",   released:"Aug 2018" },
+  "Ryzen TR 2970WX":   { msrp:"$1.299", released:"Okt 2018" },
+  "Ryzen TR 2990WX":   { msrp:"$1.799", released:"Aug 2018" },
+  // ── AMD TRX40 – Threadripper 3000 (Zen 2, Nov 2019 / Feb 2020) ───────────
+  "Ryzen TR 3960X":    { msrp:"$1.399", released:"Nov 2019" },
+  "Ryzen TR 3970X":    { msrp:"$1.999", released:"Nov 2019" },
+  "Ryzen TR 3990X":    { msrp:"$3.990", released:"Feb 2020" },
+  // ── AMD TRX50 – Threadripper 7000 (Zen 4, Nov 2023) ─────────────────────
+  "Ryzen TR 7960X":    { msrp:"$1.499", released:"Nov 2023" },
+  "Ryzen TR 7970X":    { msrp:"$2.499", released:"Nov 2023" },
+  "Ryzen TR 7980X":    { msrp:"$4.999", released:"Nov 2023" },
+};
 
 // ─── CPU data ─────────────────────────────────────────────────────────────────
 // igpu: null = kein iGPU (KF/F oder HEDT). String = iGPU vorhanden
@@ -826,6 +987,18 @@ function App() {
                                   </div>
                                   {curTab==="specs" && (
                                     <div className="px-3 pb-3 pt-2.5 space-y-2">
+                                      {CPU_LAUNCH[cpu.model] && (
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <div className="bg-[#21262d] rounded-lg p-2">
+                                            <div className="text-[#6e7681] mb-0.5 text-[10px]">{lang==="de"?"UVP (Launch)":"MSRP (Launch)"}</div>
+                                            <div className="font-bold text-[#e6edf3] text-[11px]">{CPU_LAUNCH[cpu.model].msrp}</div>
+                                          </div>
+                                          <div className="bg-[#21262d] rounded-lg p-2">
+                                            <div className="text-[#6e7681] mb-0.5 text-[10px]">{lang==="de"?"Erschienen":"Released"}</div>
+                                            <div className="font-bold text-[#e6edf3] text-[11px]">{CPU_LAUNCH[cpu.model].released}</div>
+                                          </div>
+                                        </div>
+                                      )}
                                       <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
                                         {[
                                           {l:"Threads",v:cpu.threads},
@@ -898,17 +1071,19 @@ function App() {
             ) : (()=>{
               const selCpus = compareList.map(m=>cpus.find(c=>c.model===m)).filter(Boolean);
               const rowDefs = [
-                {i:0, numVal:null,          lower:false, val:c=>`${c.cores}/${c.threads}${c.coreDetail?" ("+c.coreDetail+")":""}`},
-                {i:1, numVal:null,          lower:false, val:c=>c.base+"–"+c.boost+" GHz"},
-                {i:2, numVal:c=>c.tdp,      lower:true,  val:c=>c.tdp+"W"},
-                {i:3, numVal:null,          lower:false, val:c=>c.pcie},
-                {i:4, numVal:null,          lower:false, val:c=>c.ram},
-                {i:5, numVal:null,          lower:false, val:c=>c.priceUsed},
-                {i:6, numVal:c=>c.cbR23s,  lower:false, val:c=>c.cbR23s??'–'},
-                {i:7, numVal:c=>c.cbR23m,  lower:false, val:c=>c.cbR23m??'–'},
-                {i:8, numVal:c=>c.cbR24s,  lower:false, val:c=>c.cbR24s??'–'},
-                {i:9, numVal:c=>c.cbR24m,  lower:false, val:c=>c.cbR24m??'–'},
-                {i:10,numVal:null,          lower:false, val:c=>LC[c.llmRating].label[lang]},
+                {i:0, numVal:null,          lower:false, val:c=>CPU_LAUNCH[c.model]?.released??'–'},
+                {i:1, numVal:null,          lower:false, val:c=>CPU_LAUNCH[c.model]?.msrp??'–'},
+                {i:2, numVal:null,          lower:false, val:c=>`${c.cores}/${c.threads}${c.coreDetail?" ("+c.coreDetail+")":""}`},
+                {i:3, numVal:null,          lower:false, val:c=>c.base+"–"+c.boost+" GHz"},
+                {i:4, numVal:c=>c.tdp,      lower:true,  val:c=>c.tdp+"W"},
+                {i:5, numVal:null,          lower:false, val:c=>c.pcie},
+                {i:6, numVal:null,          lower:false, val:c=>c.ram},
+                {i:7, numVal:null,          lower:false, val:c=>c.priceUsed},
+                {i:8, numVal:c=>c.cbR23s,  lower:false, val:c=>c.cbR23s??'–'},
+                {i:9, numVal:c=>c.cbR23m,  lower:false, val:c=>c.cbR23m??'–'},
+                {i:10,numVal:c=>c.cbR24s,  lower:false, val:c=>c.cbR24s??'–'},
+                {i:11,numVal:c=>c.cbR24m,  lower:false, val:c=>c.cbR24m??'–'},
+                {i:12,numVal:null,          lower:false, val:c=>LC[c.llmRating].label[lang]},
               ];
               return (
                 <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
