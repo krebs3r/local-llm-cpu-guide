@@ -29,12 +29,21 @@
   <!-- html2canvas (PNG export) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    body { margin: 0; background-color: #0d1117; }
+    body {
+      margin: 0;
+      background-color: #0d1117;
+      background-image:
+        radial-gradient(ellipse at 15% 25%, rgba(31,111,235,0.13) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 75%, rgba(139,92,246,0.09) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 5%,  rgba(88,166,255,0.07) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
     * { box-sizing: border-box; }
   </style>
 </head>
 <body>
   <div id="root"></div>
+  <script src="cpus.js"></script>
   <script type="text/babel">
     const { useState, useMemo, useEffect, useRef } = React;
 
@@ -74,6 +83,8 @@ const T = {
     intelLabel:     "Intel",
     amdLabel:       "AMD",
     allFilter:      "Alle",
+    searchPlaceholder: "CPU suchen...",
+    compareBtn:        (n) => `${n} CPU${n>1?"s":""} vergleichen`,
     priceLegend:    "* Gebraucht-Schätzpreise Mär 2026",
     cores:          "Kerne",
     tabSpecs:       "Specs",
@@ -124,6 +135,8 @@ const T = {
     intelLabel:     "Intel",
     amdLabel:       "AMD",
     allFilter:      "All",
+    searchPlaceholder: "Search CPU...",
+    compareBtn:        (n) => `Compare ${n} CPU${n>1?"s":""}`,
     priceLegend:    "* Used-market estimates Mar 2026",
     cores:          "Cores",
     tabSpecs:       "Specs",
@@ -317,325 +330,9 @@ const PLATFORM_META = {
   },
 };
 
-const APP_VERSION = "v13";
+const APP_VERSION = "v58";
 const PLATFORM_ORDER = ["LGA1200","LGA1700","LGA1851","X299_Intel","AM4","AM5","X399","TRX40","TRX50"];
 
-// ─── CPU Launch data (MSRP & Release date) ────────────────────────────────────
-const CPU_LAUNCH = {
-  // ── Intel LGA1200 – Comet Lake (10th Gen, Mai 2020) ──────────────────────
-  "Core i5-10600K":    { msrp:"$262",   released:"Mai 2020" },
-  "Core i5-10600KF":   { msrp:"$237",   released:"Mai 2020" },
-  "Core i7-10700K":    { msrp:"$374",   released:"Mai 2020" },
-  "Core i7-10700KF":   { msrp:"$349",   released:"Mai 2020" },
-  "Core i9-10900K":    { msrp:"$488",   released:"Mai 2020" },
-  "Core i9-10900KF":   { msrp:"$472",   released:"Mai 2020" },
-  // ── Intel LGA1200 – Rocket Lake (11th Gen, Mär 2021) ─────────────────────
-  "Core i5-11600K":    { msrp:"$262",   released:"Mär 2021" },
-  "Core i5-11600KF":   { msrp:"$237",   released:"Mär 2021" },
-  "Core i7-11700K":    { msrp:"$399",   released:"Mär 2021" },
-  "Core i7-11700KF":   { msrp:"$374",   released:"Mär 2021" },
-  "Core i9-11900K":    { msrp:"$539",   released:"Mär 2021" },
-  "Core i9-11900KF":   { msrp:"$513",   released:"Mär 2021" },
-  // ── Intel LGA1700 – Alder Lake (12th Gen, Nov 2021) ──────────────────────
-  "Core i5-12600K":    { msrp:"$289",   released:"Nov 2021" },
-  "Core i5-12600KF":   { msrp:"$264",   released:"Nov 2021" },
-  "Core i7-12700K":    { msrp:"$409",   released:"Nov 2021" },
-  "Core i7-12700KF":   { msrp:"$384",   released:"Nov 2021" },
-  "Core i9-12900K":    { msrp:"$589",   released:"Nov 2021" },
-  "Core i9-12900KF":   { msrp:"$564",   released:"Nov 2021" },
-  "Core i9-12900KS":   { msrp:"$739",   released:"Apr 2022" },
-  // ── Intel LGA1700 – Raptor Lake (13th Gen, Okt 2022) ─────────────────────
-  "Core i5-13600K":    { msrp:"$319",   released:"Okt 2022" },
-  "Core i5-13600KF":   { msrp:"$296",   released:"Okt 2022" },
-  "Core i7-13700K":    { msrp:"$409",   released:"Okt 2022" },
-  "Core i7-13700KF":   { msrp:"$384",   released:"Okt 2022" },
-  "Core i9-13900K":    { msrp:"$589",   released:"Okt 2022" },
-  "Core i9-13900KF":   { msrp:"$564",   released:"Okt 2022" },
-  "Core i9-13900KS":   { msrp:"$699",   released:"Jan 2023" },
-  // ── Intel LGA1700 – Raptor Lake Refresh (14th Gen, Okt 2023) ─────────────
-  "Core i5-14600K":    { msrp:"$319",   released:"Okt 2023" },
-  "Core i5-14600KF":   { msrp:"$294",   released:"Okt 2023" },
-  "Core i7-14700K":    { msrp:"$409",   released:"Okt 2023" },
-  "Core i7-14700KF":   { msrp:"$384",   released:"Okt 2023" },
-  "Core i9-14900K":    { msrp:"$589",   released:"Okt 2023" },
-  "Core i9-14900KF":   { msrp:"$564",   released:"Okt 2023" },
-  "Core i9-14900KS":   { msrp:"$699",   released:"Mär 2024" },
-  // ── Intel LGA1851 – Arrow Lake (Core Ultra 200S, Okt 2024) ───────────────
-  "Core Ultra 5 245K":  { msrp:"$309",  released:"Okt 2024" },
-  "Core Ultra 5 245KF": { msrp:"$294",  released:"Okt 2024" },
-  "Core Ultra 7 265K":  { msrp:"$394",  released:"Okt 2024" },
-  "Core Ultra 7 265KF": { msrp:"$379",  released:"Okt 2024" },
-  "Core Ultra 9 285K":  { msrp:"$589",  released:"Okt 2024" },
-  // ── Intel LGA1851 – Arrow Lake Refresh (Feb 2025) ────────────────────────
-  "Core Ultra 5 250K Plus": { msrp:"$299", released:"Feb 2025" },
-  "Core Ultra 7 270K Plus": { msrp:"$394", released:"Feb 2025" },
-  // ── Intel X299 – Skylake-X (Jun / Aug 2017) ───────────────────────────────
-  "Core i7-7800X":     { msrp:"$389",   released:"Jun 2017" },
-  "Core i7-7820X":     { msrp:"$599",   released:"Jun 2017" },
-  "Core i9-7900X":     { msrp:"$999",   released:"Jun 2017" },
-  "Core i9-7920X":     { msrp:"$1.189", released:"Aug 2017" },
-  "Core i9-7940X":     { msrp:"$1.399", released:"Aug 2017" },
-  "Core i9-7960X":     { msrp:"$1.699", released:"Aug 2017" },
-  "Core i9-7980XE":    { msrp:"$1.999", released:"Aug 2017" },
-  // ── Intel X299 – Cascade Lake-X (Nov 2019) ───────────────────────────────
-  "Core i9-10900X":    { msrp:"$590",   released:"Nov 2019" },
-  "Core i9-10920X":    { msrp:"$689",   released:"Nov 2019" },
-  "Core i9-10940X":    { msrp:"$784",   released:"Nov 2019" },
-  "Core i9-10960X":    { msrp:"$979",   released:"Nov 2019" },
-  "Core i9-10980XE":   { msrp:"$979",   released:"Nov 2019" },
-  // ── AMD AM4 – Ryzen 1000 (Zen, Mär / Apr 2017) ───────────────────────────
-  "Ryzen 7 1700":      { msrp:"$329",   released:"Mär 2017" },
-  "Ryzen 7 1700X":     { msrp:"$399",   released:"Mär 2017" },
-  "Ryzen 7 1800X":     { msrp:"$499",   released:"Mär 2017" },
-  "Ryzen 5 1600":      { msrp:"$220",   released:"Apr 2017" },
-  "Ryzen 5 1600X":     { msrp:"$250",   released:"Apr 2017" },
-  // ── AMD AM4 – Ryzen 2000 (Zen+, Apr 2018) ────────────────────────────────
-  "Ryzen 5 2600":      { msrp:"$199",   released:"Apr 2018" },
-  "Ryzen 5 2600X":     { msrp:"$229",   released:"Apr 2018" },
-  "Ryzen 7 2700":      { msrp:"$299",   released:"Apr 2018" },
-  "Ryzen 7 2700X":     { msrp:"$329",   released:"Apr 2018" },
-  // ── AMD AM4 – Raven Ridge APU (Zen+, Feb 2018) ───────────────────────────
-  "Ryzen 3 2200G":     { msrp:"$99",    released:"Feb 2018" },
-  "Ryzen 3 2200GE":    { msrp:"$99",    released:"Feb 2018" },
-  "Ryzen 5 2400G":     { msrp:"$169",   released:"Feb 2018" },
-  "Ryzen 5 2400GE":    { msrp:"$149",   released:"Feb 2018" },
-  // ── AMD AM4 – Ryzen 3000 (Zen 2, Jul 2019) ───────────────────────────────
-  "Ryzen 5 3600":      { msrp:"$199",   released:"Jul 2019" },
-  "Ryzen 5 3600X":     { msrp:"$249",   released:"Jul 2019" },
-  "Ryzen 7 3700X":     { msrp:"$329",   released:"Jul 2019" },
-  "Ryzen 7 3800X":     { msrp:"$399",   released:"Jul 2019" },
-  "Ryzen 9 3900X":     { msrp:"$499",   released:"Jul 2019" },
-  "Ryzen 9 3950X":     { msrp:"$749",   released:"Nov 2019" },
-  // ── AMD AM4 – Picasso APU (Zen+, Jul 2019) ───────────────────────────────
-  "Ryzen 3 3200G":     { msrp:"$99",    released:"Jul 2019" },
-  "Ryzen 3 3200GE":    { msrp:"$99",    released:"Jul 2019" },
-  "Ryzen 5 3400G":     { msrp:"$149",   released:"Jul 2019" },
-  "Ryzen 5 3400GE":    { msrp:"$149",   released:"Jul 2019" },
-  // ── AMD AM4 – Renoir APU (Zen 2, OEM 2020) ───────────────────────────────
-  "Ryzen 3 4300GE":    { msrp:"OEM",    released:"Jul 2020" },
-  "Ryzen 5 4600G":     { msrp:"OEM",    released:"Jul 2020" },
-  "Ryzen 5 4600GE":    { msrp:"OEM",    released:"Jul 2020" },
-  "Ryzen 7 4700G":     { msrp:"OEM",    released:"Jul 2020" },
-  "Ryzen 7 4700GE":    { msrp:"OEM",    released:"Jul 2020" },
-  // ── AMD AM4 – Ryzen 5000 (Zen 3, Nov 2020) ───────────────────────────────
-  "Ryzen 5 5600X":     { msrp:"$299",   released:"Nov 2020" },
-  "Ryzen 7 5800X":     { msrp:"$449",   released:"Nov 2020" },
-  "Ryzen 9 5900X":     { msrp:"$549",   released:"Nov 2020" },
-  "Ryzen 9 5950X":     { msrp:"$799",   released:"Nov 2020" },
-  // ── AMD AM4 – Cezanne APU (Zen 3, Aug 2021 DIY) ─────────────────────────
-  "Ryzen 5 5600G":     { msrp:"$259",   released:"Aug 2021" },
-  "Ryzen 5 5600GE":    { msrp:"OEM",    released:"Jan 2021" },
-  "Ryzen 7 5700G":     { msrp:"$359",   released:"Aug 2021" },
-  "Ryzen 7 5700GE":    { msrp:"OEM",    released:"Jan 2021" },
-  "Ryzen 9 5900GE":    { msrp:"OEM",    released:"Jan 2021" },
-  // ── AMD AM4 – Ryzen 5000 Refresh (Apr 2022) ──────────────────────────────
-  "Ryzen 5 5600":      { msrp:"$199",   released:"Apr 2022" },
-  "Ryzen 7 5700X":     { msrp:"$299",   released:"Apr 2022" },
-  "Ryzen 7 5800X3D":   { msrp:"$449",   released:"Apr 2022" },
-  // ── AMD AM5 – Ryzen 7000 (Zen 4, Sep 2022) ───────────────────────────────
-  "Ryzen 5 7600X":     { msrp:"$299",   released:"Sep 2022" },
-  "Ryzen 7 7700X":     { msrp:"$399",   released:"Sep 2022" },
-  "Ryzen 9 7900X":     { msrp:"$549",   released:"Sep 2022" },
-  "Ryzen 9 7950X":     { msrp:"$699",   released:"Sep 2022" },
-  "Ryzen 5 7600":      { msrp:"$229",   released:"Jan 2023" },
-  "Ryzen 7 7700":      { msrp:"$329",   released:"Jan 2023" },
-  "Ryzen 9 7900":      { msrp:"$429",   released:"Jan 2023" },
-  // ── AMD AM5 – Ryzen 7000X3D (Zen 4, Feb / Apr 2023) ─────────────────────
-  "Ryzen 9 7950X3D":   { msrp:"$699",   released:"Feb 2023" },
-  "Ryzen 9 7900X3D":   { msrp:"$599",   released:"Feb 2023" },
-  "Ryzen 7 7800X3D":   { msrp:"$449",   released:"Apr 2023" },
-  // ── AMD AM5 – Ryzen 8000G APU (Zen 4, Jan 2024) ──────────────────────────
-  "Ryzen 5 8500G":     { msrp:"$179",   released:"Jan 2024" },
-  "Ryzen 5 8600G":     { msrp:"$229",   released:"Jan 2024" },
-  "Ryzen 5 8600GE":    { msrp:"OEM",    released:"Jan 2024" },
-  "Ryzen 7 8700G":     { msrp:"$329",   released:"Jan 2024" },
-  "Ryzen 7 8700GE":    { msrp:"OEM",    released:"Jan 2024" },
-  // ── AMD AM5 – Ryzen 9000 (Zen 5, Aug 2024) ───────────────────────────────
-  "Ryzen 5 9600X":     { msrp:"$279",   released:"Aug 2024" },
-  "Ryzen 7 9700X":     { msrp:"$359",   released:"Aug 2024" },
-  "Ryzen 9 9900X":     { msrp:"$499",   released:"Aug 2024" },
-  "Ryzen 9 9950X":     { msrp:"$649",   released:"Aug 2024" },
-  "Ryzen 7 9700GE":    { msrp:"OEM",    released:"Jan 2025" },
-  "Ryzen 9 9900GE":    { msrp:"OEM",    released:"Jan 2025" },
-  // ── AMD AM5 – Ryzen 9000X3D (Zen 5, Nov 2024 – Mär 2025) ────────────────
-  "Ryzen 7 9800X3D":   { msrp:"$479",   released:"Nov 2024" },
-  "Ryzen 9 9900X3D":   { msrp:"$599",   released:"Mär 2025" },
-  "Ryzen 9 9950X3D":   { msrp:"$699",   released:"Mär 2025" },
-  "Ryzen 7 9850X3D":   { msrp:"$499",   released:"Jan 2026" },
-  // ── AMD X399 – Threadripper 1000 (Zen, Aug 2017) ─────────────────────────
-  "Ryzen TR 1900X":    { msrp:"$549",   released:"Aug 2017" },
-  "Ryzen TR 1920X":    { msrp:"$799",   released:"Aug 2017" },
-  "Ryzen TR 1950X":    { msrp:"$999",   released:"Aug 2017" },
-  // ── AMD X399 – Threadripper 2000 (Zen+, Aug / Okt 2018) ──────────────────
-  "Ryzen TR 2920X":    { msrp:"$649",   released:"Okt 2018" },
-  "Ryzen TR 2950X":    { msrp:"$899",   released:"Aug 2018" },
-  "Ryzen TR 2970WX":   { msrp:"$1.299", released:"Okt 2018" },
-  "Ryzen TR 2990WX":   { msrp:"$1.799", released:"Aug 2018" },
-  // ── AMD TRX40 – Threadripper 3000 (Zen 2, Nov 2019 / Feb 2020) ───────────
-  "Ryzen TR 3960X":    { msrp:"$1.399", released:"Nov 2019" },
-  "Ryzen TR 3970X":    { msrp:"$1.999", released:"Nov 2019" },
-  "Ryzen TR 3990X":    { msrp:"$3.990", released:"Feb 2020" },
-  // ── AMD TRX50 – Threadripper 7000 (Zen 4, Nov 2023) ─────────────────────
-  "Ryzen TR 7960X":    { msrp:"$1.499", released:"Nov 2023" },
-  "Ryzen TR 7970X":    { msrp:"$2.499", released:"Nov 2023" },
-  "Ryzen TR 7980X":    { msrp:"$4.999", released:"Nov 2023" },
-};
-
-// ─── CPU data ─────────────────────────────────────────────────────────────────
-// igpu: null = kein iGPU (KF/F oder HEDT). String = iGPU vorhanden
-// coreDetail: P+E Aufschlüsselung für Hybrid-Architektur
-const cpus = [
-  // ══ Intel LGA1200 ══════════════════════════════════════════════════════════
-  // 10th Gen Comet Lake (PCIe 3.0, 16 Lanes)
-  { model:"Core i5-10600K",  platform:"LGA1200", gen:"10th Gen (Comet Lake)", arch:"Comet Lake·14nm", cores:6,  threads:12, coreDetail:null, base:4.1, boost:4.8, tdp:125, pcie:"PCIe 3.0 · 16 Lanes", ram:"Dual-Ch DDR4", igpu:"Intel UHD 630 · 24 EUs · Gen 9.5 · bis 1200 MHz · DX12", priceUsed:"75–110 €",  priceRating:"green",  cbR23s:1350, cbR23m:9100,  cbR24s:106, cbR24m:700, llmRating:"medium", llmText:"6 Kerne + PCIe 3.0. Single-GPU-Inference ausreichend. Dual-GPU x8/x8 auf Z490, aber PCIe 3.0 ist die schlechteste Option in dieser Übersicht." },
-  { model:"Core i5-10600KF", platform:"LGA1200", gen:"10th Gen (Comet Lake)", arch:"Comet Lake·14nm", cores:6,  threads:12, coreDetail:null, base:4.1, boost:4.8, tdp:125, pcie:"PCIe 3.0 · 16 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"70–100 €",  priceRating:"green",  cbR23s:1350, cbR23m:9100,  cbR24s:106, cbR24m:700, llmRating:"medium", llmText:"Wie i5-10600K ohne iGPU. ~5% günstiger, sonst identisch. Für LLM-Inference kein Unterschied." },
-  { model:"Core i7-10700K",  platform:"LGA1200", gen:"10th Gen (Comet Lake)", arch:"Comet Lake·14nm", cores:8,  threads:16, coreDetail:null, base:3.8, boost:5.1, tdp:125, pcie:"PCIe 3.0 · 16 Lanes", ram:"Dual-Ch DDR4", igpu:"Intel UHD 630 · 24 EUs · Gen 9.5 · bis 1200 MHz · DX12", priceUsed:"120–165 €", priceRating:"green",  cbR23s:1380, cbR23m:12800, cbR24s:107, cbR24m:980, llmRating:"medium", llmText:"8 Kerne, hoher Boost. Guter Single-GPU-LLM-Kandidat der 10th Gen. Dual-GPU x8/x8 auf Z490." },
-  { model:"Core i7-10700KF", platform:"LGA1200", gen:"10th Gen (Comet Lake)", arch:"Comet Lake·14nm", cores:8,  threads:16, coreDetail:null, base:3.8, boost:5.1, tdp:125, pcie:"PCIe 3.0 · 16 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"110–150 €", priceRating:"green",  cbR23s:1380, cbR23m:12800, cbR24s:107, cbR24m:980, llmRating:"medium", llmText:"Wie i7-10700K, kein iGPU, etwas günstiger. Für LLM-Inference identisch." },
-  { model:"Core i9-10900K",  platform:"LGA1200", gen:"10th Gen (Comet Lake)", arch:"Comet Lake·14nm", cores:10, threads:20, coreDetail:null, base:3.7, boost:5.3, tdp:125, pcie:"PCIe 3.0 · 16 Lanes", ram:"Dual-Ch DDR4", igpu:"Intel UHD 630 · 24 EUs · Gen 9.5 · bis 1200 MHz · DX12", priceUsed:"160–220 €", priceRating:"yellow", cbR23s:1400, cbR23m:16100, cbR24s:108, cbR24m:1240, llmRating:"medium", llmText:"10 Kerne – stärkste 10th-Gen-CPU für LLM-Server mit mehreren parallelen Requests. Single-GPU-Inference sehr gut, Dual-GPU x8/x8 (PCIe 3.0) möglich." },
-  { model:"Core i9-10900KF", platform:"LGA1200", gen:"10th Gen (Comet Lake)", arch:"Comet Lake·14nm", cores:10, threads:20, coreDetail:null, base:3.7, boost:5.3, tdp:125, pcie:"PCIe 3.0 · 16 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"145–200 €", priceRating:"yellow", cbR23s:1400, cbR23m:16100, cbR24s:108, cbR24m:1240, llmRating:"medium", llmText:"Wie i9-10900K, kein iGPU. Günstigere Variante für LLM-Setups ohne Display-Output vom CPU." },
-  // 11th Gen Rocket Lake (PCIe 4.0, 20 Lanes)
-  { model:"Core i5-11600K",  platform:"LGA1200", gen:"11th Gen (Rocket Lake)", arch:"Cypress Cove·14nm", cores:6,  threads:12, coreDetail:null, base:3.9, boost:4.9, tdp:125, pcie:"PCIe 4.0 · 20 Lanes", ram:"Dual-Ch DDR4", igpu:"Intel UHD 750 · 32 EUs · Xe-LP (Gen 12) · bis 1300 MHz · DX12", priceUsed:"80–115 €",  priceRating:"green",  cbR23s:1560, cbR23m:10200, cbR24s:119, cbR24m:790, llmRating:"medium", llmText:"Erster Intel-CPU mit PCIe 4.0. 6 Kerne für Single-GPU-LLM ausreichend. Dual-GPU x8/x8 (PCIe 4.0) auf Z590 deutlich besser als 10th Gen." },
-  { model:"Core i5-11600KF", platform:"LGA1200", gen:"11th Gen (Rocket Lake)", arch:"Cypress Cove·14nm", cores:6,  threads:12, coreDetail:null, base:3.9, boost:4.9, tdp:125, pcie:"PCIe 4.0 · 20 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"75–105 €",  priceRating:"green",  cbR23s:1560, cbR23m:10200, cbR24s:119, cbR24m:790, llmRating:"medium", llmText:"Wie 11600K ohne iGPU. Gleiche PCIe-4.0-Fähigkeit." },
-  { model:"Core i7-11700K",  platform:"LGA1200", gen:"11th Gen (Rocket Lake)", arch:"Cypress Cove·14nm", cores:8,  threads:16, coreDetail:null, base:3.6, boost:5.0, tdp:125, pcie:"PCIe 4.0 · 20 Lanes", ram:"Dual-Ch DDR4", igpu:"Intel UHD 750 · 32 EUs · Xe-LP (Gen 12) · bis 1300 MHz · DX12", priceUsed:"120–170 €", priceRating:"green",  cbR23s:1600, cbR23m:13200, cbR24s:121, cbR24m:1010, llmRating:"medium", llmText:"8 Kerne + PCIe 4.0. Solide Wahl für Single-GPU- und Dual-GPU-LLM-Setups (x8/x8 auf Z590)." },
-  { model:"Core i7-11700KF", platform:"LGA1200", gen:"11th Gen (Rocket Lake)", arch:"Cypress Cove·14nm", cores:8,  threads:16, coreDetail:null, base:3.6, boost:5.0, tdp:125, pcie:"PCIe 4.0 · 20 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"110–155 €", priceRating:"green",  cbR23s:1600, cbR23m:13200, cbR24s:121, cbR24m:1010, llmRating:"medium", llmText:"Günstigere Variante des 11700K. Für LLM-Inference identisch." },
-  { model:"Core i9-11900K",  platform:"LGA1200", gen:"11th Gen (Rocket Lake)", arch:"Cypress Cove·14nm", cores:8,  threads:16, coreDetail:null, base:3.5, boost:5.2, tdp:125, pcie:"PCIe 4.0 · 20 Lanes", ram:"Dual-Ch DDR4", igpu:"Intel UHD 750 · 32 EUs · Xe-LP (Gen 12) · bis 1300 MHz · DX12", priceUsed:"150–210 €", priceRating:"yellow", cbR23s:1650, cbR23m:13100, cbR24s:123, cbR24m:1010, llmRating:"medium", llmText:"Stärkstes LGA1200-Modell. Trotz i9-Branding nur 8 Kerne (Rocket-Lake-Limit). PCIe 4.0 x8/x8 Dual-GPU auf Z590. Guter Gebraucht-Deal." },
-  { model:"Core i9-11900KF", platform:"LGA1200", gen:"11th Gen (Rocket Lake)", arch:"Cypress Cove·14nm", cores:8,  threads:16, coreDetail:null, base:3.5, boost:5.2, tdp:125, pcie:"PCIe 4.0 · 20 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"140–195 €", priceRating:"yellow", cbR23s:1650, cbR23m:13100, cbR24s:123, cbR24m:1010, llmRating:"medium", llmText:"Wie i9-11900K ohne iGPU. Für LLM-Inference identisch, etwas günstiger." },
-
-  // ══ Intel LGA1700 ══════════════════════════════════════════════════════════
-  // 12th Gen Alder Lake (PCIe 5.0/4.0, Hybrid P+E)
-  { model:"Core i5-12600K",  platform:"LGA1700", gen:"12th Gen (Alder Lake)", arch:"Alder Lake·Intel 7", cores:10, threads:16, coreDetail:"6P+4E", base:3.7, boost:4.9, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1450 MHz · DX12", priceUsed:"130–175 €", priceRating:"green",  cbR23s:1960, cbR23m:17200, cbR24s:155, cbR24m:1350, llmRating:"medium", llmText:"Erste Hybrid-Architektur bei Intel. 6P+4E-Kerne. Single-GPU-LLM sehr gut. Dual-GPU x8/x8 PCIe 5.0 auf Z690/Z790. Gutes Preis-Leistungs-Verhältnis." },
-  { model:"Core i5-12600KF", platform:"LGA1700", gen:"12th Gen (Alder Lake)", arch:"Alder Lake·Intel 7", cores:10, threads:16, coreDetail:"6P+4E", base:3.7, boost:4.9, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:null, priceUsed:"120–160 €", priceRating:"green",  cbR23s:1960, cbR23m:17200, cbR24s:155, cbR24m:1350, llmRating:"medium", llmText:"Wie 12600K ohne iGPU. Empfohlen wenn Display an dedizierter GPU hängt." },
-  { model:"Core i7-12700K",  platform:"LGA1700", gen:"12th Gen (Alder Lake)", arch:"Alder Lake·Intel 7", cores:12, threads:20, coreDetail:"8P+4E", base:3.6, boost:5.0, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1500 MHz · DX12", priceUsed:"200–265 €", priceRating:"yellow", cbR23s:2000, cbR23m:22300, cbR24s:157, cbR24m:1750, llmRating:"medium", llmText:"8P+4E-Kerne. Gute Multi-Threading-Basis für LLM-Server mit mehreren Nutzern. Dual-GPU x8/x8 PCIe 5.0." },
-  { model:"Core i7-12700KF", platform:"LGA1700", gen:"12th Gen (Alder Lake)", arch:"Alder Lake·Intel 7", cores:12, threads:20, coreDetail:"8P+4E", base:3.6, boost:5.0, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:null, priceUsed:"185–250 €", priceRating:"yellow", cbR23s:2000, cbR23m:22300, cbR24s:157, cbR24m:1750, llmRating:"medium", llmText:"Wie 12700K ohne iGPU. Für LLM-Inference identisch." },
-  { model:"Core i9-12900K",  platform:"LGA1700", gen:"12th Gen (Alder Lake)", arch:"Alder Lake·Intel 7", cores:16, threads:24, coreDetail:"8P+8E", base:3.2, boost:5.2, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"260–345 €", priceRating:"orange", cbR23s:2050, cbR23m:27600, cbR24s:161, cbR24m:2170, llmRating:"medium", llmText:"16 Kerne (8P+8E). Starke Multi-Threading-Basis. Dual-GPU x8/x8 PCIe 5.0. Beste 12th-Gen-Wahl für LLM-Server." },
-  { model:"Core i9-12900KF", platform:"LGA1700", gen:"12th Gen (Alder Lake)", arch:"Alder Lake·Intel 7", cores:16, threads:24, coreDetail:"8P+8E", base:3.2, boost:5.2, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:null, priceUsed:"240–325 €", priceRating:"orange", cbR23s:2050, cbR23m:27600, cbR24s:161, cbR24m:2170, llmRating:"medium", llmText:"Wie 12900K ohne iGPU. Empfohlen für LLM-Setups." },
-  { model:"Core i9-12900KS", platform:"LGA1700", gen:"12th Gen (Alder Lake)", arch:"Alder Lake·Intel 7", cores:16, threads:24, coreDetail:"8P+8E", base:3.4, boost:5.5, tdp:150, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"290–380 €", priceRating:"orange", cbR23s:2100, cbR23m:28200, cbR24s:163, cbR24m:2220, llmRating:"medium", llmText:"Höchster Takt der 12th Gen. Für LLM-Inference praktisch identisch zum 12900K. Höherer TDP für fraglichen Mehrwert." },
-  // 13th Gen Raptor Lake (PCIe 5.0/4.0, mehr E-Kerne)
-  { model:"Core i5-13600K",  platform:"LGA1700", gen:"13th Gen (Raptor Lake)", arch:"Raptor Lake·Intel 7", cores:14, threads:20, coreDetail:"6P+8E", base:3.5, boost:5.1, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"185–245 €", priceRating:"yellow", cbR23s:2070, cbR23m:24800, cbR24s:165, cbR24m:1950, llmRating:"medium", llmText:"6P+8E-Kerne. Mehr E-Kerne als 12th Gen helfen bei parallelen LLM-Requests. Single/Dual-GPU-LLM sehr gut." },
-  { model:"Core i5-13600KF", platform:"LGA1700", gen:"13th Gen (Raptor Lake)", arch:"Raptor Lake·Intel 7", cores:14, threads:20, coreDetail:"6P+8E", base:3.5, boost:5.1, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:null, priceUsed:"170–230 €", priceRating:"yellow", cbR23s:2070, cbR23m:24800, cbR24s:165, cbR24m:1950, llmRating:"medium", llmText:"Wie 13600K ohne iGPU. Für LLM-Inference identisch." },
-  { model:"Core i7-13700K",  platform:"LGA1700", gen:"13th Gen (Raptor Lake)", arch:"Raptor Lake·Intel 7", cores:16, threads:24, coreDetail:"8P+8E", base:3.4, boost:5.4, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"280–370 €", priceRating:"orange", cbR23s:2180, cbR23m:31500, cbR24s:172, cbR24m:2480, llmRating:"medium", llmText:"8P+8E-Kerne. Gute Basis für Multi-User-LLM-Server. Dual-GPU x8/x8 PCIe 5.0 auf Z790." },
-  { model:"Core i7-13700KF", platform:"LGA1700", gen:"13th Gen (Raptor Lake)", arch:"Raptor Lake·Intel 7", cores:16, threads:24, coreDetail:"8P+8E", base:3.4, boost:5.4, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:null, priceUsed:"265–350 €", priceRating:"orange", cbR23s:2180, cbR23m:31500, cbR24s:172, cbR24m:2480, llmRating:"medium", llmText:"Wie 13700K ohne iGPU. Für LLM-Inference identisch." },
-  { model:"Core i9-13900K",  platform:"LGA1700", gen:"13th Gen (Raptor Lake)", arch:"Raptor Lake·Intel 7", cores:24, threads:32, coreDetail:"8P+16E", base:3.0, boost:5.8, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"375–490 €", priceRating:"orange", cbR23s:2230, cbR23m:40800, cbR24s:177, cbR24m:3220, llmRating:"medium", llmText:"24 Kerne (8P+16E) – stärkste 13th-Gen-CPU. Sehr gut für Multi-User-LLM-Setups. Dual-GPU x8/x8 PCIe 5.0. HINWEIS: 13th/14th Gen hatten bekannte Degradationsprobleme bei Übertaktung." },
-  { model:"Core i9-13900KF", platform:"LGA1700", gen:"13th Gen (Raptor Lake)", arch:"Raptor Lake·Intel 7", cores:24, threads:32, coreDetail:"8P+16E", base:3.0, boost:5.8, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:null, priceUsed:"355–465 €", priceRating:"orange", cbR23s:2230, cbR23m:40800, cbR24s:177, cbR24m:3220, llmRating:"medium", llmText:"Wie 13900K ohne iGPU. Für LLM-Inference identisch." },
-  { model:"Core i9-13900KS", platform:"LGA1700", gen:"13th Gen (Raptor Lake)", arch:"Raptor Lake·Intel 7", cores:24, threads:32, coreDetail:"8P+16E", base:3.2, boost:6.0, tdp:150, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"425–540 €", priceRating:"red",    cbR23s:2290, cbR23m:42000, cbR24s:179, cbR24m:3320, llmRating:"medium", llmText:"Erster Consumer-CPU mit 6 GHz Boost. Für LLM-Inference kaum Mehrwert ggü. 13900K. Höherer TDP (150W). Degradationsprobleme bekannt." },
-  // 14th Gen Raptor Lake Refresh
-  { model:"Core i5-14600K",  platform:"LGA1700", gen:"14th Gen (Raptor Lake Refresh)", arch:"Raptor Lake·Intel 7", cores:14, threads:20, coreDetail:"6P+8E", base:3.5, boost:5.3, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"210–275 €", priceRating:"yellow", cbR23s:2080, cbR23m:25500, cbR24s:166, cbR24m:2010, llmRating:"medium", llmText:"Praktisch identisch zum 13600K mit minimalem Takt-Boost. Für LLM-Inference kein messbarer Unterschied." },
-  { model:"Core i5-14600KF", platform:"LGA1700", gen:"14th Gen (Raptor Lake Refresh)", arch:"Raptor Lake·Intel 7", cores:14, threads:20, coreDetail:"6P+8E", base:3.5, boost:5.3, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:null, priceUsed:"195–260 €", priceRating:"yellow", cbR23s:2080, cbR23m:25500, cbR24s:166, cbR24m:2010, llmRating:"medium", llmText:"Wie 14600K ohne iGPU. Für LLM-Inference identisch." },
-  { model:"Core i7-14700K",  platform:"LGA1700", gen:"14th Gen (Raptor Lake Refresh)", arch:"Raptor Lake·Intel 7", cores:20, threads:28, coreDetail:"8P+12E", base:3.4, boost:5.6, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"330–430 €", priceRating:"orange", cbR23s:2240, cbR23m:35500, cbR24s:178, cbR24m:2800, llmRating:"medium", llmText:"Wichtige Verbesserung ggü. 13700K: 4 mehr E-Kerne (12 statt 8). 20 Kerne gesamt sehr gut für parallele LLM-Workloads." },
-  { model:"Core i7-14700KF", platform:"LGA1700", gen:"14th Gen (Raptor Lake Refresh)", arch:"Raptor Lake·Intel 7", cores:20, threads:28, coreDetail:"8P+12E", base:3.4, boost:5.6, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:null, priceUsed:"315–410 €", priceRating:"orange", cbR23s:2240, cbR23m:35500, cbR24s:178, cbR24m:2800, llmRating:"medium", llmText:"Wie 14700K ohne iGPU. Empfohlen für reine GPU-Setups." },
-  { model:"Core i9-14900K",  platform:"LGA1700", gen:"14th Gen (Raptor Lake Refresh)", arch:"Raptor Lake·Intel 7", cores:24, threads:32, coreDetail:"8P+16E", base:3.2, boost:6.0, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"425–550 €", priceRating:"red",    cbR23s:2280, cbR23m:41500, cbR24s:182, cbR24m:3290, llmRating:"medium", llmText:"24 Kerne (8P+16E). Stärkstes LGA1700-Modell. Dual-GPU x8/x8 PCIe 5.0 auf Z790. Degradationsprobleme bei Übertaktung bekannt – mit Intel-Microcode-Update stabiler." },
-  { model:"Core i9-14900KF", platform:"LGA1700", gen:"14th Gen (Raptor Lake Refresh)", arch:"Raptor Lake·Intel 7", cores:24, threads:32, coreDetail:"8P+16E", base:3.2, boost:6.0, tdp:125, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:null, priceUsed:"405–525 €", priceRating:"red",    cbR23s:2280, cbR23m:41500, cbR24s:182, cbR24m:3290, llmRating:"medium", llmText:"Wie 14900K ohne iGPU. Für LLM-Inference identisch." },
-  { model:"Core i9-14900KS", platform:"LGA1700", gen:"14th Gen (Raptor Lake Refresh)", arch:"Raptor Lake·Intel 7", cores:24, threads:32, coreDetail:"8P+16E", base:3.2, boost:6.2, tdp:150, pcie:"PCIe 5.0/4.0 · 20 Lanes", ram:"Dual-Ch DDR4/DDR5", igpu:"Intel UHD 770 · 32 EUs · Xe-LP (Gen 12) · bis 1550 MHz · DX12", priceUsed:"475–610 €", priceRating:"red",    cbR23s:2310, cbR23m:42500, cbR24s:185, cbR24m:3360, llmRating:"medium", llmText:"Höchster Boost aller LGA1700-CPUs (6.2 GHz). Für LLM-Inference kaum Mehrwert. Deutlich höherer Verbrauch (150W)." },
-
-  // ══ Intel LGA1851 (Core Ultra 200S, Arrow Lake) ══════════════════════════
-  { model:"Core Ultra 5 245K",  platform:"LGA1851", gen:"Core Ultra 200S (Arrow Lake)", arch:"Arrow Lake·Intel 3", cores:14, threads:14, coreDetail:"6P+8E", base:4.2, boost:5.2, tdp:125, pcie:"PCIe 5.0 · 20 Lanes", ram:"Dual-Ch DDR5", igpu:"Intel Graphics · 4 Xe-Kerne (32 EUs) · Xe-LPG · bis 2000 MHz · DX12.1", priceUsed:"285–355 €", priceRating:"orange", cbR23s:2220, cbR23m:19800, cbR24s:160, cbR24m:1540, llmRating:"medium", llmText:"14 Kerne aber nur 14 Threads – Arrow Lake entfernte Hyper-Threading auf P-Kernen. Für MT-LLM-Workloads weniger Threads als Raptor Lake. Single-GPU-LLM problemlos. Dual-GPU x8/x8 PCIe 5.0 auf Z890." },
-  { model:"Core Ultra 5 245KF", platform:"LGA1851", gen:"Core Ultra 200S (Arrow Lake)", arch:"Arrow Lake·Intel 3", cores:14, threads:14, coreDetail:"6P+8E", base:4.2, boost:5.2, tdp:125, pcie:"PCIe 5.0 · 20 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"270–340 €", priceRating:"orange", cbR23s:2220, cbR23m:19800, cbR24s:160, cbR24m:1540, llmRating:"medium", llmText:"Wie 245K ohne iGPU. Für LLM-Inference identisch. Kein HT = weniger Threads als 13th/14th Gen Vergleichs-CPU." },
-  { model:"Core Ultra 7 265K",  platform:"LGA1851", gen:"Core Ultra 200S (Arrow Lake)", arch:"Arrow Lake·Intel 3", cores:20, threads:20, coreDetail:"8P+12E", base:3.9, boost:5.5, tdp:125, pcie:"PCIe 5.0 · 20 Lanes", ram:"Dual-Ch DDR5", igpu:"Intel Graphics · 4 Xe-Kerne (32 EUs) · Xe-LPG · bis 2000 MHz · DX12.1", priceUsed:"385–480 €", priceRating:"orange", cbR23s:2330, cbR23m:25300, cbR24s:170, cbR24m:1980, llmRating:"medium", llmText:"20 Kerne, 20 Threads (kein HT). IPC-Verbesserung ggü. Raptor Lake kompensiert teils fehlende Threads. Dual-GPU x8/x8 PCIe 5.0. Solide LLM-Plattform für 2026." },
-  { model:"Core Ultra 7 265KF", platform:"LGA1851", gen:"Core Ultra 200S (Arrow Lake)", arch:"Arrow Lake·Intel 3", cores:20, threads:20, coreDetail:"8P+12E", base:3.9, boost:5.5, tdp:125, pcie:"PCIe 5.0 · 20 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"365–460 €", priceRating:"orange", cbR23s:2330, cbR23m:25300, cbR24s:170, cbR24m:1980, llmRating:"medium", llmText:"Wie 265K ohne iGPU. Empfohlen für LLM-Systeme mit dedizierter GPU." },
-  { model:"Core Ultra 9 285K",  platform:"LGA1851", gen:"Core Ultra 200S (Arrow Lake)", arch:"Arrow Lake·Intel 3", cores:24, threads:24, coreDetail:"8P+16E", base:3.7, boost:5.7, tdp:125, pcie:"PCIe 5.0 · 20 Lanes", ram:"Dual-Ch DDR5", igpu:"Intel Graphics · 4 Xe-Kerne (32 EUs) · Xe-LPG · bis 2000 MHz · DX12.1", priceUsed:"545–680 €", priceRating:"red",    cbR23s:2430, cbR23m:36000, cbR24s:180, cbR24m:2830, llmRating:"medium", llmText:"Stärkstes Arrow-Lake-Modell. 24 Kerne/24 Threads – kein HT bedeutet weniger Threads als i9-14900K (32T). Beste Arrow-Lake-Wahl für LLM-Server mit parallelen Requests." },
-  // Arrow Lake Plus (2025)
-  { model:"Core Ultra 5 250K Plus", platform:"LGA1851", gen:"Core Ultra 200S Plus (Arrow Lake Plus)", arch:"Arrow Lake·Intel 3", cores:18, threads:18, coreDetail:"6P+12E", base:4.2, boost:5.3, tdp:125, pcie:"PCIe 5.0 · 20 Lanes", ram:"Dual-Ch DDR5", igpu:"Intel Graphics · 4 Xe-Kerne (32 EUs) · Xe-LPG · bis 2000 MHz · DX12.1", priceUsed:"185–220 €", priceRating:"yellow", cbR23s:null, cbR23m:null, cbR24s:null, cbR24m:null, llmRating:"medium", llmText:"Arrow Lake Plus: 6P+12E = 18 Kerne/18 Threads – 4 mehr E-Kerne als 245K. DDR5-7200 offiziell unterstützt (CUDIMM). Kein HT auf P-Kernen. Mehr E-Kerne helfen bei parallelen LLM-Requests. PCIe 5.0 x8/x8 Dual-GPU auf Z890." },
-  { model:"Core Ultra 7 270K Plus", platform:"LGA1851", gen:"Core Ultra 200S Plus (Arrow Lake Plus)", arch:"Arrow Lake·Intel 3", cores:24, threads:24, coreDetail:"8P+16E", base:3.7, boost:5.4, tdp:125, pcie:"PCIe 5.0 · 20 Lanes", ram:"Dual-Ch DDR5", igpu:"Intel Graphics · 4 Xe-Kerne (32 EUs) · Xe-LPG · bis 2000 MHz · DX12.1", priceUsed:"280–330 €", priceRating:"orange", cbR23s:null, cbR23m:null, cbR24s:null, cbR24m:null, llmRating:"medium", llmText:"Arrow Lake Plus: 8P+16E = 24 Kerne/24 Threads – identische Kernkonfiguration zum 285K bei deutlich niedrigerem Preis. DDR5-7200 offiziell (CUDIMM). Beste Preis-Leistungs-Wahl im Arrow-Lake-Plus-Lineup für Multi-User-LLM-Server. PCIe 5.0 x8/x8 Dual-GPU auf Z890." },
-
-  // ══ Intel X299 HEDT ═══════════════════════════════════════════════════════
-  // Skylake-X (2017) – 28-Lane Modelle
-  { model:"Core i7-7800X",  platform:"X299_Intel", gen:"Skylake-X (7000er)", arch:"Skylake-X·14nm", cores:6,  threads:12, coreDetail:null, base:3.5, boost:4.0, tdp:140, pcie:"PCIe 3.0 · 28 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"40–70 €",   priceRating:"green",  cbR23s:1160, cbR23m:7500,  cbR24s:88, cbR24m:580, llmRating:"medium-low", llmText:"28 CPU-Lanes – limitierter als AMD X399. Dual-GPU nur x8/x8 (kein x16/x16). 6 Kerne ausreichend für Single-GPU-Inference. Quad-Ch DDR4 ist Pluspunkt." },
-  { model:"Core i7-7820X",  platform:"X299_Intel", gen:"Skylake-X (7000er)", arch:"Skylake-X·14nm", cores:8,  threads:16, coreDetail:null, base:3.6, boost:4.3, tdp:140, pcie:"PCIe 3.0 · 28 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"55–90 €",   priceRating:"green",  cbR23s:1210, cbR23m:10200, cbR24s:92, cbR24m:790, llmRating:"medium-low", llmText:"8 Kerne + 28 Lanes. Dual-GPU maximal x8/x8 – schlechter als AMD X399 bei gleicher PCIe-Generation. Trotzdem günstiger Einstieg in Quad-Channel-DDR4." },
-  // Skylake-X – 44-Lane Modelle
-  { model:"Core i9-7900X",  platform:"X299_Intel", gen:"Skylake-X (7000er)", arch:"Skylake-X·14nm", cores:10, threads:20, coreDetail:null, base:3.3, boost:4.5, tdp:140, pcie:"PCIe 3.0 · 44 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"75–120 €",  priceRating:"green",  cbR23s:1260, cbR23m:13200, cbR24s:96, cbR24m:1020, llmRating:"medium",     llmText:"44 PCIe-3.0-Lanes – echtes x16/x16 Dual-GPU möglich. Triple-GPU mit x16/x16/x8 (3. Slot kompromittiert). Vergleichbar mit AMD X399, aber weniger Lanes als Threadripper 2xxx." },
-  { model:"Core i9-7920X",  platform:"X299_Intel", gen:"Skylake-X (7000er)", arch:"Skylake-X·14nm", cores:12, threads:24, coreDetail:null, base:2.9, boost:4.4, tdp:140, pcie:"PCIe 3.0 · 44 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"90–140 €",  priceRating:"green",  cbR23s:1240, cbR23m:15800, cbR24s:95, cbR24m:1230, llmRating:"medium",     llmText:"12 Kerne + 44 Lanes. Dual-GPU x16/x16 problemlos. Für LLM-Server mit mehreren parallelen Requests besser als 7900X." },
-  { model:"Core i9-7940X",  platform:"X299_Intel", gen:"Skylake-X (7000er)", arch:"Skylake-X·14nm", cores:14, threads:28, coreDetail:null, base:3.1, boost:4.4, tdp:165, pcie:"PCIe 3.0 · 44 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"110–165 €", priceRating:"green",  cbR23s:1240, cbR23m:18400, cbR24s:95, cbR24m:1430, llmRating:"medium",     llmText:"14 Kerne + 44 Lanes. Guter LLM-Kandidat auf X299. Triple-GPU mit x16/x16/x8 (kompromittierter dritter Slot)." },
-  { model:"Core i9-7960X",  platform:"X299_Intel", gen:"Skylake-X (7000er)", arch:"Skylake-X·14nm", cores:16, threads:32, coreDetail:null, base:2.8, boost:4.4, tdp:165, pcie:"PCIe 3.0 · 44 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"125–185 €", priceRating:"green",  cbR23s:1240, cbR23m:20800, cbR24s:95, cbR24m:1620, llmRating:"medium",     llmText:"16 Kerne + 44 Lanes. Starke Basis für Multi-GPU-LLM. Dual-GPU x16/x16. Triple möglich mit x16/x16/x8." },
-  { model:"Core i9-7980XE", platform:"X299_Intel", gen:"Skylake-X (7000er)", arch:"Skylake-X·14nm", cores:18, threads:36, coreDetail:null, base:2.6, boost:4.4, tdp:165, pcie:"PCIe 3.0 · 44 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"140–210 €", priceRating:"green",  cbR23s:1240, cbR23m:23000, cbR24s:95, cbR24m:1800, llmRating:"medium",     llmText:"18 Kerne, stärkstes Skylake-X-Modell. 44 Lanes = x16/x16 Dual-GPU. Triple mit x16/x16/x8. Für reines LLM-Inference überdimensioniert, aber guter Gesamtpreis gebraucht." },
-  // Cascade Lake-X (2019) – 48 Lanes
-  { model:"Core i9-10900X",  platform:"X299_Intel", gen:"Cascade Lake-X (10000er)", arch:"Cascade Lake·14nm++", cores:10, threads:20, coreDetail:null, base:3.7, boost:4.7, tdp:165, pcie:"PCIe 3.0 · 48 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"130–190 €", priceRating:"green",  cbR23s:1370, cbR23m:13600, cbR24s:105, cbR24m:1050, llmRating:"good", llmText:"48 PCIe-3.0-Lanes. Triple-GPU x16/x16/x16 möglich (auf neuem X299-Board). Höherer Takt als Skylake-X. DL Boost (AVX-512) hilft bei CPU-seitiger KI-Inferenz." },
-  { model:"Core i9-10920X",  platform:"X299_Intel", gen:"Cascade Lake-X (10000er)", arch:"Cascade Lake·14nm++", cores:12, threads:24, coreDetail:null, base:3.5, boost:4.8, tdp:165, pcie:"PCIe 3.0 · 48 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"155–220 €", priceRating:"yellow", cbR23s:1370, cbR23m:16200, cbR24s:105, cbR24m:1250, llmRating:"good", llmText:"12 Kerne + 48 Lanes. Triple-GPU x16/x16/x16. Guter Multi-GPU-LLM-Kandidat mit solidem Preis gebraucht." },
-  { model:"Core i9-10940X",  platform:"X299_Intel", gen:"Cascade Lake-X (10000er)", arch:"Cascade Lake·14nm++", cores:14, threads:28, coreDetail:null, base:3.3, boost:4.8, tdp:165, pcie:"PCIe 3.0 · 48 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"180–260 €", priceRating:"yellow", cbR23s:1370, cbR23m:19000, cbR24s:105, cbR24m:1470, llmRating:"good", llmText:"14 Kerne + 48 Lanes. Triple-GPU x16/x16/x16. Vergleichbar mit AMD X399 bei Kernzahl, aber PCIe 3.0 und weniger Lanes als Threadripper." },
-  { model:"Core i9-10960X",  platform:"X299_Intel", gen:"Cascade Lake-X (10000er)", arch:"Cascade Lake·14nm++", cores:16, threads:32, coreDetail:null, base:3.1, boost:4.8, tdp:165, pcie:"PCIe 3.0 · 48 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"205–295 €", priceRating:"yellow", cbR23s:1380, cbR23m:21900, cbR24s:106, cbR24m:1700, llmRating:"good", llmText:"16 Kerne + 48 Lanes. Triple-GPU x16/x16/x16. Konkurriert direkt mit AMD Threadripper 2950X auf X399, hat aber weniger Lanes (48 vs 64) und PCIe 3.0." },
-  { model:"Core i9-10980XE", platform:"X299_Intel", gen:"Cascade Lake-X (10000er)", arch:"Cascade Lake·14nm++", cores:18, threads:36, coreDetail:null, base:3.0, boost:4.8, tdp:165, pcie:"PCIe 3.0 · 48 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"230–340 €", priceRating:"yellow", cbR23s:1390, cbR23m:25700, cbR24s:107, cbR24m:2000, llmRating:"good", llmText:"Stärkstes X299-Modell. 18 Kerne + 48 Lanes. Triple-GPU x16/x16/x16 möglich. Konkurriert mit AMD TR 2970WX. AMD hat mehr Lanes (64 vs 48), Intel hat höheren Takt. DL Boost für AVX-512-KI-Workloads." },
-
-  // ══ AMD AM4 ═══════════════════════════════════════════════════════════════
-  { model:"Ryzen 5 1600",    platform:"AM4", gen:"1000 (Zen)",   arch:"Zen·GF14nm",  cores:6,  threads:12, coreDetail:null, base:3.2, boost:3.6, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"35–60 €",   priceRating:"green",  cbR23s:1040, cbR23m:8300,  cbR24s:78, cbR24m:645, llmRating:"low",        llmText:"6 Kerne. Single-GPU-Inference mit Ollama ausreichend. PCIe 3.0 ist kein Engpass bei Inference." },
-  { model:"Ryzen 5 1600X",   platform:"AM4", gen:"1000 (Zen)",   arch:"Zen·GF14nm",  cores:6,  threads:12, coreDetail:null, base:3.6, boost:4.0, tdp:95,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"40–65 €",   priceRating:"green",  cbR23s:1090, cbR23m:8700,  cbR24s:82, cbR24m:675, llmRating:"low",        llmText:"Wie 1600, höherer Takt. Für Single-GPU-LLM-Inference brauchbar." },
-  { model:"Ryzen 7 1700",    platform:"AM4", gen:"1000 (Zen)",   arch:"Zen·GF14nm",  cores:8,  threads:16, coreDetail:null, base:3.0, boost:3.7, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"45–75 €",   priceRating:"green",  cbR23s:1040, cbR23m:10400, cbR24s:78, cbR24m:808, llmRating:"low",        llmText:"8 Kerne, sehr sparsam. Bester 1000er-Kandidat für LLM-Homelab." },
-  { model:"Ryzen 7 1700X",   platform:"AM4", gen:"1000 (Zen)",   arch:"Zen·GF14nm",  cores:8,  threads:16, coreDetail:null, base:3.4, boost:3.8, tdp:95,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"50–80 €",   priceRating:"green",  cbR23s:1090, cbR23m:11000, cbR24s:82, cbR24m:854, llmRating:"low",        llmText:"8 Kerne, höherer Boost. Auf X370/X470: Dual-GPU x8/x8 möglich." },
-  { model:"Ryzen 7 1800X",   platform:"AM4", gen:"1000 (Zen)",   arch:"Zen·GF14nm",  cores:8,  threads:16, coreDetail:null, base:3.6, boost:4.0, tdp:95,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"55–90 €",   priceRating:"green",  cbR23s:1110, cbR23m:11300, cbR24s:84, cbR24m:879, llmRating:"low",        llmText:"Bestes 1000er-Modell. Single-GPU-Inference läuft rund." },
-  { model:"Ryzen 5 2600",    platform:"AM4", gen:"2000 (Zen+)",  arch:"Zen+·GF12nm", cores:6,  threads:12, coreDetail:null, base:3.4, boost:3.9, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"40–65 €",   priceRating:"green",  cbR23s:1100, cbR23m:9600,  cbR24s:83, cbR24m:746, llmRating:"low",        llmText:"Zen+-Verbesserung. Single-GPU-Inference gut nutzbar." },
-  { model:"Ryzen 5 2600X",   platform:"AM4", gen:"2000 (Zen+)",  arch:"Zen+·GF12nm", cores:6,  threads:12, coreDetail:null, base:3.6, boost:4.2, tdp:95,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"45–70 €",   priceRating:"green",  cbR23s:1150, cbR23m:10100, cbR24s:86, cbR24m:785, llmRating:"low",        llmText:"Höherer Takt als 2600. Single-GPU-LLM-Inference ausreichend." },
-  { model:"Ryzen 7 2700",    platform:"AM4", gen:"2000 (Zen+)",  arch:"Zen+·GF12nm", cores:8,  threads:16, coreDetail:null, base:3.2, boost:4.1, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"50–80 €",   priceRating:"green",  cbR23s:1110, cbR23m:12400, cbR24s:84, cbR24m:964, llmRating:"low",        llmText:"8 Kerne, effizienter TDP. Für Single-GPU-LLM gutes Preis-Leistungs-Verhältnis." },
-  { model:"Ryzen 7 2700X",   platform:"AM4", gen:"2000 (Zen+)",  arch:"Zen+·GF12nm", cores:8,  threads:16, coreDetail:null, base:3.7, boost:4.3, tdp:105, pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"60–90 €",   priceRating:"green",  cbR23s:1170, cbR23m:13200, cbR24s:88, cbR24m:1026, llmRating:"low",        llmText:"Bestes 2000er-Modell. Auf X470: Dual-GPU x8/x8 (PCIe 3.0) möglich. Für LLM-Inference mit 2 GPUs eingeschränkt nutzbar." },
-  { model:"Ryzen 3 2200G",   platform:"AM4", gen:"2000G (Zen·Vega)", arch:"Raven Ridge·GF14nm", cores:4, threads:8,  coreDetail:null, base:3.5, boost:3.7, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 8 · 8 CUs (512 SPs) · GCN 5 (Vega) · bis 1100 MHz · DX12", priceUsed:"30–55 €",   priceRating:"green",  cbR23s:1070, cbR23m:4500,  cbR24s:80, cbR24m:350, llmRating:"low",        llmText:"4-Kern-APU. iGPU nutzt Shared System-RAM – kein dediziertes VRAM. GPU-LLM-Inference nicht praktikabel. Nur CPU-seitige Inference sehr kleiner quantisierter Modelle (~1–3B)." },
-  { model:"Ryzen 5 2400G",   platform:"AM4", gen:"2000G (Zen·Vega)", arch:"Raven Ridge·GF14nm", cores:4, threads:8,  coreDetail:null, base:3.6, boost:3.9, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 11 · 11 CUs (704 SPs) · GCN 5 (Vega) · bis 1250 MHz · DX12", priceUsed:"40–65 €",   priceRating:"green",  cbR23s:1110, cbR23m:7200,  cbR24s:84, cbR24m:560, llmRating:"low",        llmText:"4 Kerne + Vega 11 (stärkste iGPU der 2000G-Serie). iGPU teilt sich System-RAM. GPU-LLM-Inference nicht empfohlen – kein VRAM-Budget. CPU-Inference kleiner Modelle möglich." },
-  { model:"Ryzen 3 2200GE",  platform:"AM4", gen:"2000G (Zen·Vega)", arch:"Raven Ridge·GF14nm", cores:4, threads:4,  coreDetail:null, base:3.2, boost:3.6, tdp:35,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 8 · 8 CUs (512 SPs) · GCN 5 (Vega) · bis 1100 MHz · DX12", priceUsed:"25–45 €",   priceRating:"green",  cbR23s:990,  cbR23m:4200,  cbR24s:75, cbR24m:326, llmRating:"low",        llmText:"35W-Variante des 2200G ohne SMT (4C/4T). Überwiegend OEM-Verfügbarkeit. iGPU nutzt Shared System-RAM – GPU-LLM-Inference nicht praktikabel. Für stromsparende Minirechner ohne dedizierte GPU." },
-  { model:"Ryzen 5 2400GE",  platform:"AM4", gen:"2000G (Zen·Vega)", arch:"Raven Ridge·GF14nm", cores:4, threads:8,  coreDetail:null, base:3.2, boost:3.8, tdp:35,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 11 · 11 CUs (704 SPs) · GCN 5 (Vega) · bis 1250 MHz · DX12", priceUsed:"35–55 €",   priceRating:"green",  cbR23s:1050, cbR23m:6900,  cbR24s:80, cbR24m:537, llmRating:"low",        llmText:"35W-Variante des 2400G mit SMT (4C/8T). Überwiegend OEM-Verfügbarkeit. Stärkste iGPU der 2000GE-Serie (Vega 11). GPU-LLM-Inference nicht empfohlen – kein dediziertes VRAM." },
-  { model:"Ryzen 5 3600",    platform:"AM4", gen:"3000 (Zen 2)", arch:"Zen 2·TSMC7", cores:6,  threads:12, coreDetail:null, base:3.6, boost:4.2, tdp:65,  pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"60–90 €",   priceRating:"green",  cbR23s:1320, cbR23m:11100, cbR24s:101, cbR24m:864, llmRating:"medium-low", llmText:"PCIe 4.0 + 6 Kerne. Single-GPU-Inference mit RTX 3090/4090 gut. Dual-GPU nur x8/x8 auf X570." },
-  { model:"Ryzen 5 3600X",   platform:"AM4", gen:"3000 (Zen 2)", arch:"Zen 2·TSMC7", cores:6,  threads:12, coreDetail:null, base:3.8, boost:4.4, tdp:95,  pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"65–95 €",   priceRating:"green",  cbR23s:1350, cbR23m:11500, cbR24s:103, cbR24m:895, llmRating:"medium-low", llmText:"Wie 3600, etwas höherer Takt. Für Single-GPU-LLM-Inference sehr gut." },
-  { model:"Ryzen 7 3700X",   platform:"AM4", gen:"3000 (Zen 2)", arch:"Zen 2·TSMC7", cores:8,  threads:16, coreDetail:null, base:3.6, boost:4.4, tdp:65,  pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"90–130 €",  priceRating:"green",  cbR23s:1340, cbR23m:15200, cbR24s:102, cbR24m:1183, llmRating:"medium-low", llmText:"8 Kerne + PCIe 4.0. Sehr gutes Preis-Leistungs-Verhältnis. Dual-GPU x8/x8 auf X570 möglich." },
-  { model:"Ryzen 7 3800X",   platform:"AM4", gen:"3000 (Zen 2)", arch:"Zen 2·TSMC7", cores:8,  threads:16, coreDetail:null, base:3.9, boost:4.5, tdp:105, pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"100–140 €", priceRating:"green",  cbR23s:1370, cbR23m:15900, cbR24s:104, cbR24m:1237, llmRating:"medium-low", llmText:"Wie 3700X mit höherem Takt. Für LLM-Inference kaum Unterschied." },
-  { model:"Ryzen 9 3900X",   platform:"AM4", gen:"3000 (Zen 2)", arch:"Zen 2·TSMC7", cores:12, threads:24, coreDetail:null, base:3.8, boost:4.6, tdp:105, pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"120–170 €", priceRating:"yellow", cbR23s:1360, cbR23m:23000, cbR24s:103, cbR24m:1790, llmRating:"medium-low", llmText:"12 Kerne. Für LLM-Server mit mehreren parallelen Requests besser als 8-Kerner." },
-  { model:"Ryzen 9 3950X",   platform:"AM4", gen:"3000 (Zen 2)", arch:"Zen 2·TSMC7", cores:16, threads:32, coreDetail:null, base:3.5, boost:4.7, tdp:105, pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"190–260 €", priceRating:"yellow", cbR23s:1380, cbR23m:30200, cbR24s:105, cbR24m:2350, llmRating:"medium",     llmText:"Stärkstes Zen-2-AM4-Modell. 16 Kerne. Dual-GPU x8/x8 auf X570. Lane-Limit von 24 bleibt das Bottleneck für Multi-GPU." },
-  { model:"Ryzen 3 3200G",   platform:"AM4", gen:"3000G (Zen+·Vega)", arch:"Picasso·GF12nm",  cores:4, threads:4,  coreDetail:null, base:3.6, boost:4.0, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 8 · 8 CUs (512 SPs) · GCN 5 (Vega) · bis 1250 MHz · DX12", priceUsed:"35–60 €",   priceRating:"green",  cbR23s:1130, cbR23m:4500,  cbR24s:85, cbR24m:350, llmRating:"low",        llmText:"4 Kerne ohne SMT (4C/4T). iGPU für LLM-GPU-Inference ungeeignet (Shared-RAM, kein VRAM). Nur kleine CPU-seitige Inference möglich." },
-  { model:"Ryzen 5 3400G",   platform:"AM4", gen:"3000G (Zen+·Vega)", arch:"Picasso·GF12nm",  cores:4, threads:8,  coreDetail:null, base:3.7, boost:4.2, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 11 · 11 CUs (704 SPs) · GCN 5 (Vega) · bis 1400 MHz · DX12", priceUsed:"50–80 €",   priceRating:"green",  cbR23s:1180, cbR23m:7500,  cbR24s:89, cbR24m:583, llmRating:"low",        llmText:"4 Kerne + SMT + Vega 11 – bestes 3000G-Modell. Vega 11 etwas schneller als Vega 8. Für LLM-GPU-Inference kein dediziertes VRAM." },
-  { model:"Ryzen 3 3200GE",  platform:"AM4", gen:"3000G (Zen+·Vega)", arch:"Picasso·GF12nm",  cores:4, threads:4,  coreDetail:null, base:3.3, boost:3.8, tdp:35,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 8 · 8 CUs (512 SPs) · GCN 5 (Vega) · bis 1250 MHz · DX12", priceUsed:"30–50 €",   priceRating:"green",  cbR23s:1060, cbR23m:4200,  cbR24s:80, cbR24m:327, llmRating:"low",        llmText:"35W-Variante des 3200G ohne SMT (4C/4T). OEM/Embedded. Gleiche Vega-8-iGPU wie 3200G. iGPU für LLM-GPU-Inference ungeeignet (Shared-RAM, kein VRAM)." },
-  { model:"Ryzen 5 3400GE",  platform:"AM4", gen:"3000G (Zen+·Vega)", arch:"Picasso·GF12nm",  cores:4, threads:8,  coreDetail:null, base:3.3, boost:4.0, tdp:35,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 11 · 11 CUs (704 SPs) · GCN 5 (Vega) · bis 1400 MHz · DX12", priceUsed:"40–65 €",   priceRating:"green",  cbR23s:1120, cbR23m:7200,  cbR24s:85, cbR24m:560, llmRating:"low",        llmText:"35W-Variante des 3400G mit SMT (4C/8T). OEM/Embedded. Stärkste iGPU der 3000GE-Serie (Vega 11). Für energiesparende Systeme mit dedizierter GPU interessant." },
-  { model:"Ryzen 3 4300GE",  platform:"AM4", gen:"4000G (Zen 2·Vega)", arch:"Renoir·TSMC7",   cores:4, threads:8,  coreDetail:null, base:3.5, boost:4.0, tdp:35,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 6 · 6 CUs (384 SPs) · GCN 5 (Vega) · bis 1700 MHz · DX12", priceUsed:"50–80 €",   priceRating:"green",  cbR23s:1220, cbR23m:5400,  cbR24s:93, cbR24m:420, llmRating:"low",        llmText:"35W TDP, 4 Kerne (Zen 2). Energiesparsamste 4000G-Variante. iGPU zu schwach für GPU-LLM. Meist OEM-Verfügbarkeit." },
-  { model:"Ryzen 5 4600G",   platform:"AM4", gen:"4000G (Zen 2·Vega)", arch:"Renoir·TSMC7",   cores:6, threads:12, coreDetail:null, base:3.7, boost:4.2, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 7 · 7 CUs (448 SPs) · GCN 5 (Vega) · bis 1900 MHz · DX12", priceUsed:"80–120 €",  priceRating:"green",  cbR23s:1260, cbR23m:9300,  cbR24s:95, cbR24m:724, llmRating:"low",        llmText:"6 Kerne (Zen 2) + Vega 7. Deutlich besser als Raven Ridge/Picasso bei CPU-Performance. iGPU nutzt Shared-RAM – GPU-LLM-Inference nicht geeignet. CPU-Inference kleiner quantisierter Modelle möglich." },
-  { model:"Ryzen 5 4600GE",  platform:"AM4", gen:"4000G (Zen 2·Vega)", arch:"Renoir·TSMC7",   cores:6, threads:12, coreDetail:null, base:3.3, boost:4.2, tdp:35,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 7 · 7 CUs (448 SPs) · GCN 5 (Vega) · bis 1900 MHz · DX12", priceUsed:"75–110 €",  priceRating:"green",  cbR23s:1180, cbR23m:8800,  cbR24s:90, cbR24m:685, llmRating:"low",        llmText:"Energiesparsame GE-Variante des 4600G (35W). Für passiv gekühlte Systeme. Gleiche iGPU wie 4600G." },
-  { model:"Ryzen 7 4700G",   platform:"AM4", gen:"4000G (Zen 2·Vega)", arch:"Renoir·TSMC7",   cores:8, threads:16, coreDetail:null, base:3.6, boost:4.4, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 8 · 8 CUs (512 SPs) · GCN 5 (Vega) · bis 2100 MHz · DX12", priceUsed:"110–155 €", priceRating:"green",  cbR23s:1260, cbR23m:12600, cbR24s:95, cbR24m:980, llmRating:"low",        llmText:"8 Kerne (Zen 2) + Vega 8 mit höchstem Takt aller Renoir-APUs (2100 MHz). Bestes 4000G-Modell. CPU-seitige Inference bis ~7B möglich." },
-  { model:"Ryzen 7 4700GE",  platform:"AM4", gen:"4000G (Zen 2·Vega)", arch:"Renoir·TSMC7",   cores:8, threads:16, coreDetail:null, base:3.2, boost:4.4, tdp:35,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 8 · 8 CUs (512 SPs) · GCN 5 (Vega) · bis 2100 MHz · DX12", priceUsed:"105–145 €", priceRating:"green",  cbR23s:1190, cbR23m:11900, cbR24s:90, cbR24m:925, llmRating:"low",        llmText:"8 Kerne bei nur 35W TDP. Energiesparsamste 8-Kern-Option auf AM4. Ideal für lüfterarme LLM-Systeme mit dedizierter GPU." },
-  { model:"Ryzen 5 5600",    platform:"AM4", gen:"5000 (Zen 3)", arch:"Zen 3·TSMC7", cores:6,  threads:12, coreDetail:null, base:3.5, boost:4.4, tdp:65,  pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"90–130 €",  priceRating:"green",  cbR23s:1740, cbR23m:12400, cbR24s:133, cbR24m:965, llmRating:"medium-low", llmText:"Bester IPC der AM4-Plattform. Single-GPU-LLM-Inference sehr effizient." },
-  { model:"Ryzen 5 5600X",   platform:"AM4", gen:"5000 (Zen 3)", arch:"Zen 3·TSMC7", cores:6,  threads:12, coreDetail:null, base:3.7, boost:4.6, tdp:65,  pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"100–140 €", priceRating:"green",  cbR23s:1770, cbR23m:12900, cbR24s:134, cbR24m:1003, llmRating:"medium-low", llmText:"Höherer Takt als 5600. Einer der besten AM4-Werte für Single-GPU-LLM." },
-  { model:"Ryzen 7 5700X",   platform:"AM4", gen:"5000 (Zen 3)", arch:"Zen 3·TSMC7", cores:8,  threads:16, coreDetail:null, base:3.4, boost:4.6, tdp:65,  pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"110–155 €", priceRating:"yellow", cbR23s:1760, cbR23m:16700, cbR24s:133, cbR24m:1298, llmRating:"medium-low", llmText:"8 Kerne, sehr sparsam (65W). Guter Kompromiss für energieeffizientes LLM-Homelab." },
-  { model:"Ryzen 7 5800X",   platform:"AM4", gen:"5000 (Zen 3)", arch:"Zen 3·TSMC7", cores:8,  threads:16, coreDetail:null, base:3.8, boost:4.7, tdp:105, pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"120–165 €", priceRating:"yellow", cbR23s:1780, cbR23m:17100, cbR24s:135, cbR24m:1330, llmRating:"medium-low", llmText:"8 Kerne + hoher Boost. Auf X570: Dual-GPU x8/x8 möglich." },
-  { model:"Ryzen 7 5800X3D", platform:"AM4", gen:"5000 (Zen 3)", arch:"Zen 3·TSMC7", cores:8,  threads:16, coreDetail:null, base:3.4, boost:4.5, tdp:105, pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"190–260 €", priceRating:"yellow", cbR23s:1690, cbR23m:16100, cbR24s:126, cbR24m:1253, llmRating:"medium",     llmText:"96 MB L3-Cache. Für CPU-seitige LLM-Inference (kein GPU-Offloading) deutlich schneller als andere AM4-CPUs. GPU-Inference profitiert nicht vom V-Cache." },
-  { model:"Ryzen 9 5900X",   platform:"AM4", gen:"5000 (Zen 3)", arch:"Zen 3·TSMC7", cores:12, threads:24, coreDetail:null, base:3.7, boost:4.8, tdp:105, pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"170–230 €", priceRating:"yellow", cbR23s:1780, cbR23m:23600, cbR24s:135, cbR24m:1836, llmRating:"medium",     llmText:"12 Kerne + Zen-3-IPC. Bester AM4-Kandidat für LLM-Server mit mehreren parallelen Requests." },
-  { model:"Ryzen 9 5950X",   platform:"AM4", gen:"5000 (Zen 3)", arch:"Zen 3·TSMC7", cores:16, threads:32, coreDetail:null, base:3.4, boost:4.9, tdp:105, pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"210–290 €", priceRating:"yellow", cbR23s:1780, cbR23m:30800, cbR24s:135, cbR24m:2397, llmRating:"medium",     llmText:"Bestes AM4-Modell. 16 Kerne, hoher Boost, Zen-3-IPC. Dual-GPU x8/x8 auf X570. Für Single-GPU-LLM-Inference top." },
-  { model:"Ryzen 5 5600G",   platform:"AM4", gen:"5000G (Zen 3·Vega)", arch:"Cezanne·TSMC7",  cores:6,  threads:12, coreDetail:null, base:3.9, boost:4.4, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 7 · 7 CUs (448 SPs) · GCN 5 (Vega) · bis 1900 MHz · DX12", priceUsed:"100–145 €", priceRating:"green",  cbR23s:1720, cbR23m:11800, cbR24s:130, cbR24m:918, llmRating:"medium-low", llmText:"6 Kerne (Zen-3-IPC) + Vega 7. CPU-seitige Inference bis ~7B quantisiert mit Zen-3-IPC ordentlich. iGPU nutzt Shared-RAM – für GPU-LLM-Inference dedizierte Karte empfohlen." },
-  { model:"Ryzen 5 5600GE",  platform:"AM4", gen:"5000G (Zen 3·Vega)", arch:"Cezanne·TSMC7",  cores:6,  threads:12, coreDetail:null, base:3.4, boost:4.4, tdp:35,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 7 · 7 CUs (448 SPs) · GCN 5 (Vega) · bis 1900 MHz · DX12", priceUsed:"95–135 €",  priceRating:"green",  cbR23s:1650, cbR23m:11300, cbR24s:125, cbR24m:879, llmRating:"medium-low", llmText:"GE-Variante des 5600G mit nur 35W TDP. Niedrigerer Basistakt, gleicher Boost. Ideal für stromsparende LLM-Homelabs. Gleiche iGPU-Eigenschaften wie 5600G." },
-  { model:"Ryzen 7 5700G",   platform:"AM4", gen:"5000G (Zen 3·Vega)", arch:"Cezanne·TSMC7",  cores:8,  threads:16, coreDetail:null, base:3.8, boost:4.6, tdp:65,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 8 · 8 CUs (512 SPs) · GCN 5 (Vega) · bis 2000 MHz · DX12", priceUsed:"130–180 €", priceRating:"yellow", cbR23s:1720, cbR23m:15800, cbR24s:130, cbR24m:1229, llmRating:"medium-low", llmText:"8 Kerne (Zen 3) + Vega 8 – stärkstes 5000G-Modell. 8 Kerne gut für parallele LLM-Requests. iGPU für GPU-Inference nicht geeignet – dedizierte GPU empfohlen." },
-  { model:"Ryzen 7 5700GE",  platform:"AM4", gen:"5000G (Zen 3·Vega)", arch:"Cezanne·TSMC7",  cores:8,  threads:16, coreDetail:null, base:3.2, boost:4.6, tdp:35,  pcie:"PCIe 3.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:"Radeon Vega 8 · 8 CUs (512 SPs) · GCN 5 (Vega) · bis 2000 MHz · DX12", priceUsed:"125–170 €", priceRating:"yellow", cbR23s:1650, cbR23m:15200, cbR24s:125, cbR24m:1183, llmRating:"medium-low", llmText:"GE-Variante des 5700G mit 35W TDP. 8 Kerne + Vega 8 bei sehr niedrigem Verbrauch. Ideal für Mini-PC oder lüfterlose LLM-Systeme mit dedizierter GPU." },
-  { model:"Ryzen 9 5900GE",  platform:"AM4", gen:"5000 GE (Zen 3)",    arch:"Zen 3·TSMC7",    cores:12, threads:24, coreDetail:null, base:3.0, boost:4.7, tdp:35,  pcie:"PCIe 4.0 · 24 Lanes", ram:"Dual-Ch DDR4", igpu:null, priceUsed:"165–230 €", priceRating:"yellow", cbR23s:1740, cbR23m:22000, cbR24s:132, cbR24m:1712, llmRating:"medium",     llmText:"12 Kerne (Zen 3) bei nur 35W TDP – kein iGPU, PCIe 4.0 für dedizierte GPU. Für stromsparende LLM-Server sehr interessant. Dual-GPU x8/x8 auf X570 möglich. Retail selten." },
-
-  // ══ AMD AM5 ═══════════════════════════════════════════════════════════════
-  { model:"Ryzen 5 7600",    platform:"AM5", gen:"7000 (Zen 4)", arch:"Zen 4·TSMC5", cores:6,  threads:12, coreDetail:null, base:3.8, boost:5.1, tdp:65,  pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"155–200 €", priceRating:"yellow", cbR23s:2200, cbR23m:15200, cbR24s:166, cbR24m:1183, llmRating:"medium",     llmText:"PCIe 5.0 Single-GPU x16. Für LLM-Inference mit einer RTX-Karte sehr effizient. 6 Kerne ausreichend für Inference-Workloads." },
-  { model:"Ryzen 5 7600X",   platform:"AM5", gen:"7000 (Zen 4)", arch:"Zen 4·TSMC5", cores:6,  threads:12, coreDetail:null, base:4.7, boost:5.3, tdp:105, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"165–210 €", priceRating:"yellow", cbR23s:2220, cbR23m:15600, cbR24s:167, cbR24m:1213, llmRating:"medium",     llmText:"Höherer Takt als 7600. Einer der effizientesten AM5-Einsteiger für Single-GPU-LLM." },
-  { model:"Ryzen 7 7700",    platform:"AM5", gen:"7000 (Zen 4)", arch:"Zen 4·TSMC5", cores:8,  threads:16, coreDetail:null, base:3.8, boost:5.3, tdp:65,  pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"195–250 €", priceRating:"yellow", cbR23s:2200, cbR23m:20400, cbR24s:166, cbR24m:1587, llmRating:"medium",     llmText:"8 Kerne, sehr sparsam (65W TDP). Guter Kompromiss für energieeffizientes LLM-Homelab." },
-  { model:"Ryzen 7 7700X",   platform:"AM5", gen:"7000 (Zen 4)", arch:"Zen 4·TSMC5", cores:8,  threads:16, coreDetail:null, base:4.5, boost:5.4, tdp:105, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"205–260 €", priceRating:"yellow", cbR23s:2260, cbR23m:21300, cbR24s:169, cbR24m:1657, llmRating:"medium",     llmText:"Auf X670E/X870E: Dual-GPU x8/x8 PCIe 5.0 möglich – entspricht PCIe 4.0 x16 in Bandbreite." },
-  { model:"Ryzen 9 7900",    platform:"AM5", gen:"7000 (Zen 4)", arch:"Zen 4·TSMC5", cores:12, threads:24, coreDetail:null, base:3.7, boost:5.4, tdp:65,  pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"230–290 €", priceRating:"yellow", cbR23s:2200, cbR23m:29700, cbR24s:165, cbR24m:2310, llmRating:"medium",     llmText:"12 Kerne mit nur 65W TDP. Hervorragend für LLM-Server mit mehreren parallelen Nutzern. Dual-GPU x8/x8 auf X670E/X870E." },
-  { model:"Ryzen 9 7900X",   platform:"AM5", gen:"7000 (Zen 4)", arch:"Zen 4·TSMC5", cores:12, threads:24, coreDetail:null, base:4.7, boost:5.6, tdp:170, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"250–320 €", priceRating:"orange", cbR23s:2240, cbR23m:30500, cbR24s:168, cbR24m:2372, llmRating:"medium",     llmText:"12 Kerne, hoher Boost. Für LLM-Server mit parallelen Requests und Dual-GPU x8/x8 starke Kombination." },
-  { model:"Ryzen 9 7900X3D", platform:"AM5", gen:"7000 (Zen 4)", arch:"Zen 4·TSMC5", cores:12, threads:24, coreDetail:null, base:4.4, boost:5.6, tdp:120, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"310–400 €", priceRating:"orange", cbR23s:2180, cbR23m:28000, cbR24s:163, cbR24m:2178, llmRating:"medium",     llmText:"128 MB L3-Cache. Für CPU-seitige LLM-Verarbeitung deutlich schneller. GPU-basierte Inference profitiert nicht vom V-Cache." },
-  { model:"Ryzen 9 7950X",   platform:"AM5", gen:"7000 (Zen 4)", arch:"Zen 4·TSMC5", cores:16, threads:32, coreDetail:null, base:4.5, boost:5.7, tdp:170, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"370–470 €", priceRating:"orange", cbR23s:2200, cbR23m:39600, cbR24s:166, cbR24m:3080, llmRating:"medium",     llmText:"Stärkstes Zen-4-AM5-Modell ohne X3D. 16 Kerne für parallele LLM-Workloads. Dual-GPU x8/x8 PCIe 5.0 auf X670E/X870E." },
-  { model:"Ryzen 9 7950X3D", platform:"AM5", gen:"7000 (Zen 4)", arch:"Zen 4·TSMC5", cores:16, threads:32, coreDetail:null, base:4.2, boost:5.7, tdp:120, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"440–580 €", priceRating:"orange", cbR23s:2180, cbR23m:36400, cbR24s:163, cbR24m:2831, llmRating:"medium",     llmText:"192 MB L3-Cache + 16 Kerne. Für CPU-seitige LLM-Inference das stärkste AM5-Modell. Dual-GPU x8/x8 möglich." },
-  { model:"Ryzen 5 9600X",   platform:"AM5", gen:"9000 (Zen 5)", arch:"Zen 5·TSMC4", cores:6,  threads:12, coreDetail:null, base:3.9, boost:5.4, tdp:65,  pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"220–275 €", priceRating:"yellow", cbR23s:2460, cbR23m:16900, cbR24s:182, cbR24m:1315, llmRating:"medium",     llmText:"Zen-5-IPC-Verbesserung ggü. Zen 4. 6 Kerne für Single-GPU-LLM-Inference sehr effizient." },
-  { model:"Ryzen 7 9700X",   platform:"AM5", gen:"9000 (Zen 5)", arch:"Zen 5·TSMC4", cores:8,  threads:16, coreDetail:null, base:3.8, boost:5.5, tdp:65,  pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"275–340 €", priceRating:"orange", cbR23s:2470, cbR23m:22700, cbR24s:183, cbR24m:1765, llmRating:"medium",     llmText:"8 Kerne + Zen-5-IPC. 65W TDP – ideal für energieeffizientes LLM-Homelab. Dual-GPU x8/x8 auf X870E." },
-  { model:"Ryzen 7 9800X3D", platform:"AM5", gen:"9000 (Zen 5)", arch:"Zen 5·TSMC4", cores:8,  threads:16, coreDetail:null, base:4.7, boost:5.2, tdp:120, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"430–530 €", priceRating:"orange", cbR23s:2400, cbR23m:22100, cbR24s:178, cbR24m:1720, llmRating:"medium",     llmText:"96 MB L3-Cache + Zen-5. Bester Consumer-Chip für CPU-seitige LLM-Inference. GPU-Inference profitiert nicht vom V-Cache." },
-  { model:"Ryzen 7 9850X3D", platform:"AM5", gen:"9000 (Zen 5)", arch:"Zen 5·TSMC4", cores:8,  threads:16, coreDetail:null, base:4.7, boost:5.6, tdp:120, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"460–570 €", priceRating:"orange", cbR23s:2222, cbR23m:23187, cbR24s:null, cbR24m:null, llmRating:"medium",     llmText:"96 MB L3-Cache + Zen-5. Nachfolger des 9800X3D mit höherem Boost-Takt (5,6 GHz). Für CPU-seitige LLM-Inference ideal. GPU-Inference profitiert nicht vom V-Cache." },
-  { model:"Ryzen 9 9900X",   platform:"AM5", gen:"9000 (Zen 5)", arch:"Zen 5·TSMC4", cores:12, threads:24, coreDetail:null, base:4.4, boost:5.6, tdp:120, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"355–440 €", priceRating:"orange", cbR23s:2450, cbR23m:31400, cbR24s:181, cbR24m:2443, llmRating:"medium",     llmText:"12 Kerne + Zen-5-IPC. Für LLM-Server mit mehreren parallelen Usern und Dual-GPU (x8/x8 auf X870E)." },
-  { model:"Ryzen 9 9950X",   platform:"AM5", gen:"9000 (Zen 5)", arch:"Zen 5·TSMC4", cores:16, threads:32, coreDetail:null, base:4.3, boost:5.7, tdp:170, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"520–650 €", priceRating:"red",    cbR23s:2460, cbR23m:41700, cbR24s:183, cbR24m:3243, llmRating:"medium",     llmText:"Bestes AM5-Modell. 16 Kerne + Zen-5-IPC. Dual-GPU x8/x8 PCIe 5.0 auf X870E. Für LLM-Setups ohne Threadripper-Budget die beste Option." },
-  { model:"Ryzen 9 9950X3D", platform:"AM5", gen:"9000 (Zen 5)", arch:"Zen 5·TSMC4", cores:16, threads:32, coreDetail:null, base:4.0, boost:5.7, tdp:170, pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"680–820 €", priceRating:"red",    cbR23s:null, cbR23m:null, cbR24s:null, cbR24m:null, llmRating:"medium",     llmText:"192 MB L3-Cache + Zen-5 + 16 Kerne. Für CPU-seitige LLM-Inference unerreichbar im Consumer-Segment." },
-  { model:"Ryzen 5 8500G",   platform:"AM5", gen:"8000G (Zen 4·RDNA 3)", arch:"Hawk Point·TSMC4", cores:6,  threads:12, coreDetail:null, base:3.5, boost:5.0, tdp:65,  pcie:"PCIe 4.0 · 16 Lanes", ram:"Dual-Ch DDR5", igpu:"Radeon 740M · 4 CUs (256 SPs) · RDNA 3 · bis 2800 MHz · DX12.2 · Vulkan 1.3", priceUsed:"140–185 €", priceRating:"yellow", cbR23s:1960, cbR23m:11000, cbR24s:149, cbR24m:855, llmRating:"medium-low", llmText:"6 Kerne (Zen 4) + Radeon 740M. Hawk Point-APU: nur PCIe 4.0 (nicht PCIe 5.0). iGPU teilt DDR5-RAM. Mit ~8 GB BIOS-Zuweisung: kleine Modelle (bis ~3B Q4) via ROCm/llama.cpp möglich – sehr langsam. Dedizierte GPU empfohlen." },
-  { model:"Ryzen 5 8600G",   platform:"AM5", gen:"8000G (Zen 4·RDNA 3)", arch:"Hawk Point·TSMC4", cores:6,  threads:12, coreDetail:null, base:4.3, boost:5.0, tdp:65,  pcie:"PCIe 4.0 · 16 Lanes", ram:"Dual-Ch DDR5", igpu:"Radeon 760M · 8 CUs (512 SPs) · RDNA 3 · bis 2800 MHz · DX12.2 · Vulkan 1.3", priceUsed:"190–245 €", priceRating:"yellow", cbR23s:2140, cbR23m:14900, cbR24s:162, cbR24m:1159, llmRating:"medium-low", llmText:"6 Kerne (Zen 4) + Radeon 760M. Mit 32–64 GB DDR5 und 16 GB BIOS-VRAM-Zuweisung: ~7B Q4 Modelle via ROCm/llama.cpp möglich (~3–8 t/s). PCIe 4.0 x16 für dedizierte GPU. RDNA 3 wird von ROCm besser unterstützt als ältere Vega-iGPUs." },
-  { model:"Ryzen 5 8600GE",  platform:"AM5", gen:"8000G (Zen 4·RDNA 3)", arch:"Hawk Point·TSMC4", cores:6,  threads:12, coreDetail:null, base:3.0, boost:5.0, tdp:35,  pcie:"PCIe 4.0 · 16 Lanes", ram:"Dual-Ch DDR5", igpu:"Radeon 760M · 8 CUs (512 SPs) · RDNA 3 · bis 2800 MHz · DX12.2 · Vulkan 1.3", priceUsed:"185–235 €", priceRating:"yellow", cbR23s:2000, cbR23m:13800, cbR24s:152, cbR24m:1074, llmRating:"medium-low", llmText:"GE-Variante des 8600G mit 35W TDP. Ideal für passiv gekühlte oder lüfterarme Systeme. Gleiche iGPU-Fähigkeiten und RDNA-3-ROCm-Unterstützung wie 8600G." },
-  { model:"Ryzen 7 8700G",   platform:"AM5", gen:"8000G (Zen 4·RDNA 3)", arch:"Hawk Point·TSMC4", cores:8,  threads:16, coreDetail:null, base:4.2, boost:5.1, tdp:65,  pcie:"PCIe 4.0 · 16 Lanes", ram:"Dual-Ch DDR5", igpu:"Radeon 780M · 12 CUs (768 SPs) · RDNA 3 · bis 2900 MHz · DX12.2 · Vulkan 1.3", priceUsed:"290–370 €", priceRating:"orange", cbR23s:2140, cbR23m:20000, cbR24s:162, cbR24m:1556, llmRating:"medium",     llmText:"8 Kerne (Zen 4) + stärkste Consumer-Desktop-iGPU überhaupt (Radeon 780M). Mit 64 GB DDR5 und 32 GB BIOS-VRAM-Zuweisung: ~7B Q4 via llama.cpp GPU-Inference möglich (~5–15 t/s). ROCm-Support vorhanden. Für ernsthafte LLM-Setups trotzdem dedizierte GPU empfohlen." },
-  { model:"Ryzen 7 8700GE",  platform:"AM5", gen:"8000G (Zen 4·RDNA 3)", arch:"Hawk Point·TSMC4", cores:8,  threads:16, coreDetail:null, base:3.8, boost:5.1, tdp:35,  pcie:"PCIe 4.0 · 16 Lanes", ram:"Dual-Ch DDR5", igpu:"Radeon 780M · 12 CUs (768 SPs) · RDNA 3 · bis 2900 MHz · DX12.2 · Vulkan 1.3", priceUsed:"280–360 €", priceRating:"orange", cbR23s:2000, cbR23m:18200, cbR24s:152, cbR24m:1416, llmRating:"medium",     llmText:"GE-Variante des 8700G mit 35W TDP. Stärkste iGPU-Option für passiv gekühlte LLM-Systeme. 35W Gesamtverbrauch für 8 Kerne + Radeon 780M bemerkenswert effizient." },
-  { model:"Ryzen 7 9700GE",  platform:"AM5", gen:"9000 GE (Zen 5)",      arch:"Zen 5·TSMC4",      cores:8,  threads:16, coreDetail:null, base:3.0, boost:5.4, tdp:35,  pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"290–370 €", priceRating:"orange", cbR23s:null, cbR23m:null, cbR24s:null, cbR24m:null, llmRating:"medium",     llmText:"8 Kerne (Zen 5) bei nur 35W TDP. Kein iGPU – volle PCIe-5.0-Bandbreite für dedizierte GPU. Für energieeffiziente LLM-Homelab-Server ideal. Dual-GPU x8/x8 auf X870E möglich." },
-  { model:"Ryzen 9 9900GE",  platform:"AM5", gen:"9000 GE (Zen 5)",      arch:"Zen 5·TSMC4",      cores:12, threads:24, coreDetail:null, base:3.0, boost:5.5, tdp:35,  pcie:"PCIe 5.0 · 28 Lanes", ram:"Dual-Ch DDR5", igpu:null, priceUsed:"380–480 €", priceRating:"orange", cbR23s:null, cbR23m:null, cbR24s:null, cbR24m:null, llmRating:"medium",     llmText:"12 Kerne (Zen 5) bei nur 35W TDP. Für Multi-User-LLM-Server mit sehr niedrigem Stromverbrauch exzellent. Dual-GPU x8/x8 auf X870E möglich." },
-
-  // ══ AMD X399 / TRX40 / TRX50 ══════════════════════════════════════════════
-  { model:"Ryzen TR 1900X",  platform:"X399",  gen:"TR Gen 1 (Zen)",  arch:"Zen·GF14nm",  cores:8,  threads:16, coreDetail:null, base:3.8, boost:4.0, tdp:180, pcie:"PCIe 3.0 · 64 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"50–90 €",   priceRating:"green",  cbR23s:1060, cbR23m:9600,  cbR24s:80, cbR24m:746, llmRating:"medium-low", llmText:"Günstigster Threadripper-Einstieg. 64 Lanes ermöglichen echtes x16/x16 Dual-GPU – trotz nur 8 Kernen mehr PCIe-Potential als jede AM4/LGA1700-CPU." },
-  { model:"Ryzen TR 1920X",  platform:"X399",  gen:"TR Gen 1 (Zen)",  arch:"Zen·GF14nm",  cores:12, threads:24, coreDetail:null, base:3.5, boost:4.0, tdp:180, pcie:"PCIe 3.0 · 64 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"80–130 €",  priceRating:"green",  cbR23s:1080, cbR23m:14400, cbR24s:82, cbR24m:1120, llmRating:"medium",     llmText:"12 Kerne + 64 Lanes. Dual-GPU x16/x16 problemlos, Triple-GPU x16/x16/x16 boardabhängig möglich. Günstiger Einstieg in echtes Multi-GPU-LLM." },
-  { model:"Ryzen TR 1950X",  platform:"X399",  gen:"TR Gen 1 (Zen)",  arch:"Zen·GF14nm",  cores:16, threads:32, coreDetail:null, base:3.4, boost:4.0, tdp:180, pcie:"PCIe 3.0 · 64 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"120–180 €", priceRating:"green",  cbR23s:1090, cbR23m:18600, cbR24s:82, cbR24m:1447, llmRating:"medium",     llmText:"Flaggschiff Gen 1. 16 Kerne + 64 Lanes. Dual/Triple-GPU möglich. Bestes Gen-1-Modell für Multi-GPU-LLM-Setups." },
-  { model:"Ryzen TR 2920X",  platform:"X399",  gen:"TR Gen 2 (Zen+)", arch:"Zen+·GF12nm", cores:12, threads:24, coreDetail:null, base:3.5, boost:4.3, tdp:180, pcie:"PCIe 3.0 · 64 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"100–160 €", priceRating:"green",  cbR23s:1130, cbR23m:17800, cbR24s:85, cbR24m:1384, llmRating:"medium",     llmText:"12 Kerne + Zen+-Verbesserung. 64 Lanes für x16/x16 Dual-GPU. Solider Gebraucht-Deal für LLM-Setups mit zwei GPUs." },
-  { model:"Ryzen TR 2950X",  platform:"X399",  gen:"TR Gen 2 (Zen+)", arch:"Zen+·GF12nm", cores:16, threads:32, coreDetail:null, base:3.5, boost:4.4, tdp:180, pcie:"PCIe 3.0 · 64 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"160–250 €", priceRating:"yellow", cbR23s:1150, cbR23m:23700, cbR24s:87, cbR24m:1843, llmRating:"medium",     llmText:"Bester X399-Kandidat. x16/x16/x16 Triple-GPU möglich. 2× RTX 3090 = 48 GB VRAM für quantisierte 70B-Modelle." },
-  { model:"Ryzen TR 2970WX", platform:"X399",  gen:"TR Gen 2 (Zen+)", arch:"Zen+·GF12nm", cores:24, threads:48, coreDetail:null, base:3.0, boost:4.2, tdp:250, pcie:"PCIe 3.0 · 64 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"200–320 €", priceRating:"yellow", cbR23s:1140, cbR23m:29600, cbR24s:86, cbR24m:2302, llmRating:"medium",     llmText:"24 Kerne für parallele LLM-Instanzen. NUMA-Architektur beachten – CPU-Affinität korrekt binden." },
-  { model:"Ryzen TR 2990WX", platform:"X399",  gen:"TR Gen 2 (Zen+)", arch:"Zen+·GF12nm", cores:32, threads:64, coreDetail:null, base:3.0, boost:4.2, tdp:250, pcie:"PCIe 3.0 · 64 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"220–380 €", priceRating:"yellow", cbR23s:1150, cbR23m:37400, cbR24s:87, cbR24m:2908, llmRating:"medium",     llmText:"32 Kerne + 64 Lanes. Triple-GPU möglich. NUMA-Topologie beachten." },
-  { model:"Ryzen TR 3960X",  platform:"TRX40", gen:"TR Gen 3 (Zen 2)",arch:"Zen 2·TSMC7", cores:24, threads:48, coreDetail:null, base:3.8, boost:4.5, tdp:280, pcie:"PCIe 4.0 · 72 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"400–600 €", priceRating:"orange", cbR23s:1430, cbR23m:39500, cbR24s:109, cbR24m:3071, llmRating:"good",       llmText:"PCIe 4.0 + 72 Lanes. Triple-GPU x16/x16/x16. 3× RTX 3090 = 72 GB VRAM für 70B ohne Quantisierung." },
-  { model:"Ryzen TR 3970X",  platform:"TRX40", gen:"TR Gen 3 (Zen 2)",arch:"Zen 2·TSMC7", cores:32, threads:64, coreDetail:null, base:3.7, boost:4.5, tdp:280, pcie:"PCIe 4.0 · 72 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"550–800 €", priceRating:"orange", cbR23s:1430, cbR23m:49500, cbR24s:109, cbR24m:3850, llmRating:"good",       llmText:"Bester TRX40-Allrounder. 32 Kerne + PCIe 4.0 + 72 Lanes. Dual/Triple-GPU ohne Kompromisse." },
-  { model:"Ryzen TR 3990X",  platform:"TRX40", gen:"TR Gen 3 (Zen 2)",arch:"Zen 2·TSMC7", cores:64, threads:128,coreDetail:null, base:2.9, boost:4.3, tdp:280, pcie:"PCIe 4.0 · 72 Lanes", ram:"Quad-Ch DDR4", igpu:null, priceUsed:"900–1.400 €",priceRating:"red",    cbR23s:1430, cbR23m:63000, cbR24s:109, cbR24m:4900, llmRating:"good",       llmText:"64 Kerne, gleiche Lanes wie 3970X. Für reines LLM-Inference kein Mehrwert ggü. 3970X." },
-  { model:"Ryzen TR 7960X",  platform:"TRX50", gen:"TR Gen 7 (Zen 4)",arch:"Zen 4·TSMC5", cores:24, threads:48, coreDetail:null, base:4.2, boost:5.3, tdp:350, pcie:"PCIe 5.0 · 92 Lanes", ram:"Quad-Ch DDR5 RDIMM", igpu:null, priceUsed:"1.200–1.600 €",priceRating:"red", cbR23s:2190, cbR23m:60000, cbR24s:163, cbR24m:4667, llmRating:"great", llmText:"PCIe 5.0 + 92 Lanes. Triple-GPU x16/x16/x16. DDR5 RDIMM ECC. Einstieg in zukunftssichere HEDT-Plattform." },
-  { model:"Ryzen TR 7970X",  platform:"TRX50", gen:"TR Gen 7 (Zen 4)",arch:"Zen 4·TSMC5", cores:32, threads:64, coreDetail:null, base:4.0, boost:5.3, tdp:350, pcie:"PCIe 5.0 · 92 Lanes", ram:"Quad-Ch DDR5 RDIMM", igpu:null, priceUsed:"1.800–2.500 €",priceRating:"red", cbR23s:2190, cbR23m:74000, cbR24s:163, cbR24m:5754, llmRating:"great", llmText:"Beste TRX50-Wahl. 32 Kerne + PCIe 5.0 x16/x16/x16. ECC-DDR5 für Dauerbetrieb." },
-  { model:"Ryzen TR 7980X",  platform:"TRX50", gen:"TR Gen 7 (Zen 4)",arch:"Zen 4·TSMC5", cores:64, threads:128,coreDetail:null, base:3.2, boost:5.1, tdp:350, pcie:"PCIe 5.0 · 92 Lanes", ram:"Quad-Ch DDR5 RDIMM", igpu:null, priceUsed:"3.500–5.000 €",priceRating:"red", cbR23s:2190, cbR23m:104000, cbR24s:163, cbR24m:8092, llmRating:"great", llmText:"64 Kerne, gleiche Lanes wie 7970X. Für reines LLM-Inference kein Mehrwert. Lohnt nur bei parallelen CPU-intensiven Workloads." },
-];
 
 // ─── Style helpers ────────────────────────────────────────────────────────────
 const PC = { green:{bg:"bg-[#0f2f1e]",text:"text-[#3fb950]"}, yellow:{bg:"bg-[#2d1d00]",text:"text-[#d29922]"}, orange:{bg:"bg-[#2d1200]",text:"text-[#f0883e]"}, red:{bg:"bg-[#2d0909]",text:"text-[#ff7b72]"} };
@@ -673,6 +370,7 @@ function App() {
     return raw.split(",").map(m=>decodeURIComponent(m)).filter(m=>cpus.find(c=>c.model===m));
   });
   const [copied, setCopied]     = useState(false);
+  const [search, setSearch]     = useState("");
   const compareTableRef         = useRef(null);
 
   const togglePlat = p => setPlatOpen(prev => ({...prev,[p]:!prev[p]}));
@@ -764,8 +462,12 @@ function App() {
   const filteredCpus = useMemo(()=>{
     let list = filter==="Alle" ? cpus : cpus.filter(c=>c.platform===filter);
     if(genFilter!=="Alle") list = list.filter(c=>c.gen===genFilter);
+    if(search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(c=>c.model.toLowerCase().includes(q));
+    }
     return list;
-  },[filter,genFilter]);
+  },[filter,genFilter,search]);
 
   // Group filter buttons by manufacturer
   const intelPlats = ["LGA1200","LGA1700","LGA1851","X299_Intel"];
@@ -776,25 +478,28 @@ function App() {
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
-        <div className="mb-4">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-2 h-7 bg-red-500 rounded-full"/>
-            <h1 className="text-xl font-bold">{T[lang].title}</h1>
-            <div className="ml-auto flex gap-0.5">
-              {["de","en"].map(l=>(
-                <button key={l} onClick={()=>setLang(l)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded transition-all ${lang===l?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#6e7681] hover:text-[#c9d1d9]"}`}>
-                  {l.toUpperCase()}
-                </button>
+        <div className="mb-4 flex gap-3">
+          <div className="w-1.5 bg-red-500 rounded-full shrink-0"/>
+          <div className="w-1.5 bg-[#1f6feb] rounded-full shrink-0"/>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-3 mb-1">
+              <h1 className="text-xl font-bold">{T[lang].title}</h1>
+              <div className="flex gap-0.5 shrink-0">
+                {["de","en"].map(l=>(
+                  <button key={l} onClick={()=>setLang(l)}
+                    className={`px-3 py-2 text-xs font-bold rounded transition-all ${lang===l?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#6e7681] hover:text-[#c9d1d9]"}`}>
+                    {l.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-[#6e7681] text-xs mb-1.5">{T[lang].subtitle}</p>
+            <p className="text-[#8b949e] text-sm max-w-2xl leading-relaxed mb-2">{T[lang].headerDesc}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {T[lang].headerBadges.map(b=>(
+                <span key={b} className="bg-white/5 backdrop-blur-sm border border-white/10 text-[#c9d1d9] text-xs px-2.5 py-1 rounded-full">{b}</span>
               ))}
             </div>
-          </div>
-          <p className="text-[#6e7681] text-xs ml-5">{T[lang].subtitle}</p>
-          <p className="text-[#8b949e] text-sm ml-5 mt-2 max-w-2xl leading-relaxed">{T[lang].headerDesc}</p>
-          <div className="flex flex-wrap gap-1.5 ml-5 mt-2.5">
-            {T[lang].headerBadges.map(b=>(
-              <span key={b} className="bg-[#21262d] border border-[#30363d] text-[#c9d1d9] text-[11px] px-2 py-0.5 rounded-full">{b}</span>
-            ))}
           </div>
         </div>
 
@@ -806,7 +511,7 @@ function App() {
             ["compare",  <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8.75 1.75a.75.75 0 0 0-1.5 0v12.5a.75.75 0 0 0 1.5 0V1.75ZM1 3.75A.75.75 0 0 1 1.75 3H6v10H1.75A.75.75 0 0 1 1 12.25V3.75ZM10 3h4.25a.75.75 0 0 1 .75.75v8.5a.75.75 0 0 1-.75.75H10V3Z"/></svg>, T[lang].tabCompare+(compareList.length>0?" ("+compareList.length+")":"")],
           ].map(([v,icon,l])=>(
             <button key={v} onClick={()=>setView(v)}
-              className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${view===v?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
+              className={`inline-flex items-center gap-1.5 px-3 py-2.5 sm:px-4 rounded-full text-xs sm:text-sm font-medium transition-all ${view===v?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
               {icon}{l}
             </button>
           ))}
@@ -817,7 +522,7 @@ function App() {
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2 text-xs mb-1">
               {T[lang].infoCards.map(({t,d})=>(
-                <div key={t} className="bg-[#161b22] border border-[#30363d] rounded-lg p-2.5">
+                <div key={t} className="bg-[#161b22]/60 backdrop-blur-sm border border-white/10 rounded-lg p-2.5">
                   <div className="text-[#c9d1d9] font-semibold mb-1">{t}</div>
                   <div className="text-[#6e7681]">{d}</div>
                 </div>
@@ -834,7 +539,7 @@ function App() {
             {intelPlats.map(p=>{
               const m=PLATFORM_META[p]; const llm=PLAT_LC[m.llmVerdict]; const isOpen=platOpen[p];
               return (
-                <div key={p} className={`border rounded-xl overflow-hidden ${VB[m.llmVerdict]} bg-[#161b22]`}>
+                <div key={p} className={`border rounded-xl overflow-hidden backdrop-blur-sm ${VB[m.llmVerdict]} bg-[#161b22]/60`}>
                   <button className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#21262d] transition-colors" onClick={()=>togglePlat(p)}>
                     <div className="shrink-0">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${m.style}`}>{m.label}</span>
@@ -849,14 +554,14 @@ function App() {
                   </button>
                   {isOpen && (
                     <div className="border-t border-[#30363d] px-4 pb-4 pt-3 space-y-3">
-                      <div className="bg-[#21262d] rounded-lg p-3 text-xs text-[#c9d1d9] leading-relaxed">
+                      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 text-xs text-[#c9d1d9] leading-relaxed">
                         <span className={`${llm.text} font-semibold mr-2`}>{T[lang].llmVerdict}</span>{lang==="en"?(PLATFORM_EN[p]?.llmText||m.llmText):m.llmText}
                       </div>
                       <div>
                         <div className="text-[10px] font-semibold text-[#6e7681] uppercase tracking-wider mb-1.5">{T[lang].chipsetConfig}</div>
                         <div className="space-y-1.5">
                           {m.chipsets.map((cs,idx)=>(
-                            <div key={cs.name} className="bg-[#21262d] rounded-lg p-2.5 text-xs">
+                            <div key={cs.name} className="bg-white/5 backdrop-blur-sm rounded-lg p-2.5 text-xs">
                               <div className="flex flex-wrap gap-x-3 gap-y-1 mb-1">
                                 <div><span className="text-[#6e7681]">{T[lang].chipsetLabel} </span><span className="text-[#e6edf3] font-bold">{cs.name}</span></div>
                                 <div><span className="text-[#6e7681]">{T[lang].dualGpuLabel} </span><span className={cs.dualGpu.includes("❌")?"text-red-400":"text-emerald-400"}>{cs.dualGpu}</span></div>
@@ -883,7 +588,7 @@ function App() {
             {amdPlats.map(p=>{
               const m=PLATFORM_META[p]; const llm=PLAT_LC[m.llmVerdict]; const isOpen=platOpen[p];
               return (
-                <div key={p} className={`border rounded-xl overflow-hidden ${VB[m.llmVerdict]} bg-[#161b22]`}>
+                <div key={p} className={`border rounded-xl overflow-hidden backdrop-blur-sm ${VB[m.llmVerdict]} bg-[#161b22]/60`}>
                   <button className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-[#21262d] transition-colors" onClick={()=>togglePlat(p)}>
                     <div className="shrink-0">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${m.style}`}>{m.label}</span>
@@ -898,14 +603,14 @@ function App() {
                   </button>
                   {isOpen && (
                     <div className="border-t border-[#30363d] px-4 pb-4 pt-3 space-y-3">
-                      <div className="bg-[#21262d] rounded-lg p-3 text-xs text-[#c9d1d9] leading-relaxed">
+                      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 text-xs text-[#c9d1d9] leading-relaxed">
                         <span className={`${llm.text} font-semibold mr-2`}>{T[lang].llmVerdict}</span>{lang==="en"?(PLATFORM_EN[p]?.llmText||m.llmText):m.llmText}
                       </div>
                       <div>
                         <div className="text-[10px] font-semibold text-[#6e7681] uppercase tracking-wider mb-1.5">{T[lang].chipsetConfig}</div>
                         <div className="space-y-1.5">
                           {m.chipsets.map((cs,idx)=>(
-                            <div key={cs.name} className="bg-[#21262d] rounded-lg p-2.5 text-xs">
+                            <div key={cs.name} className="bg-white/5 backdrop-blur-sm rounded-lg p-2.5 text-xs">
                               <div className="flex flex-wrap gap-x-3 gap-y-1 mb-1">
                                 <div><span className="text-[#6e7681]">{T[lang].chipsetLabel} </span><span className="text-[#e6edf3] font-bold">{cs.name}</span></div>
                                 <div><span className="text-[#6e7681]">{T[lang].dualGpuLabel} </span><span className={cs.dualGpu.includes("❌")?"text-red-400":"text-emerald-400"}>{cs.dualGpu}</span></div>
@@ -923,7 +628,7 @@ function App() {
             })}
 
             {/* Summary table */}
-            <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden mt-2">
+            <div className="bg-[#161b22]/60 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden mt-2">
               <div className="px-4 py-2.5 border-b border-[#30363d] text-sm font-semibold text-[#e6edf3]">{T[lang].quickCompare}</div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
@@ -965,13 +670,29 @@ function App() {
         {/* ══ CPU VIEW ══ */}
         {view==="cpu" && (
           <div>
+            {/* Search bar */}
+            <div className="relative mb-3">
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6e7681]" viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/></svg>
+              <input
+                type="text"
+                value={search}
+                onChange={e=>{setSearch(e.target.value);setExpanded(null);}}
+                placeholder={T[lang].searchPlaceholder}
+                className="w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg pl-8 pr-8 py-2 text-sm text-[#e6edf3] placeholder-[#6e7681] focus:outline-none focus:border-[#58a6ff]/70"
+              />
+              {search && (
+                <button onClick={()=>{setSearch("");setExpanded(null);}} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6e7681] hover:text-[#c9d1d9]">
+                  <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>
+                </button>
+              )}
+            </div>
             {/* Intel / AMD filter row */}
             <div className="mb-1">
               <div className="text-[10px] text-[#58a6ff] font-semibold uppercase tracking-wider mb-1 ml-1">{T[lang].intelLabel}</div>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {["Alle",...intelPlats].map(p=>(
                   <button key={p} onClick={()=>{setFilter(p);setGenFilter("Alle");setExpanded(null);}}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${filter===p?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
+                    className={`px-3 py-2 rounded-full text-xs font-medium transition-all ${filter===p?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
                     {p==="Alle"?T[lang].allFilter:PLATFORM_META[p]?.label||p}
                   </button>
                 ))}
@@ -980,7 +701,7 @@ function App() {
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {amdPlats.map(p=>(
                   <button key={p} onClick={()=>{setFilter(p);setGenFilter("Alle");setExpanded(null);}}
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${filter===p?"bg-[#b91c1c] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
+                    className={`px-3 py-2 rounded-full text-xs font-medium transition-all ${filter===p?"bg-[#b91c1c] text-[#e6edf3]":"bg-[#21262d] text-[#8b949e] hover:bg-[#30363d]"}`}>
                     {PLATFORM_META[p]?.label||p}
                   </button>
                 ))}
@@ -989,13 +710,16 @@ function App() {
 
             {/* Gen filter */}
             {gens.length>2 && (
-              <div className="flex flex-wrap gap-1 mb-3">
+              <div className="mb-3">
+              <div className="text-[10px] text-[#6e7681] font-semibold uppercase tracking-wider mb-1 ml-1">Generation</div>
+              <div className="flex flex-wrap gap-1.5">
                 {gens.map(g=>(
                   <button key={g} onClick={()=>{setGenFilter(g);setExpanded(null);}}
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium transition-all ${genFilter===g?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#6e7681] hover:bg-[#30363d]"}`}>
+                    className={`px-3 py-2 rounded-full text-xs font-medium transition-all ${genFilter===g?"bg-[#1f6feb] text-[#e6edf3]":"bg-[#21262d] text-[#6e7681] hover:bg-[#30363d]"}`}>
                     {g==="Alle"?T[lang].allFilter:g}
                   </button>
                 ))}
+              </div>
               </div>
             )}
 
@@ -1038,19 +762,19 @@ function App() {
                           const pc=PC[cpu.priceRating]; const llm=LC[cpu.llmRating];
                           const isOpen=expanded===cpu.model; const curTab=getTab(cpu.model);
                           return (
-                            <div key={cpu.model} className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
-                              <button className="w-full text-left px-3 py-2.5 flex items-center gap-2.5 hover:bg-[#21262d] transition-colors"
+                            <div key={cpu.model} className="bg-[#161b22]/60 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
+                              <button className="w-full text-left px-3 py-3.5 flex items-center gap-2.5 hover:bg-[#21262d] transition-colors"
                                 onClick={()=>setExpanded(isOpen?null:cpu.model)}>
                                 <div className="bg-[#21262d] rounded-lg px-2 py-1 text-center min-w-[40px] shrink-0">
                                   <div className="text-base font-bold leading-none text-[#e6edf3]">{cpu.cores}</div>
-                                  <div className="text-[9px] text-[#6e7681]">{cpu.coreDetail||T[lang].cores}</div>
+                                  <div className="text-[10px] text-[#6e7681]">{cpu.coreDetail||T[lang].cores}</div>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-1.5">
                                     <span className="font-semibold text-[#e6edf3] text-sm">{cpu.model}</span>
                                     {cpu.igpu && <span className="text-[9px] bg-[#0a1829] text-[#58a6ff] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">iGPU</span>}
                                   </div>
-                                  <div className="text-[11px] text-[#6e7681]">{cpu.arch} · {cpu.base}–{cpu.boost} GHz · {cpu.tdp}W</div>
+                                  <div className="text-xs text-[#6e7681]">{cpu.arch} · {cpu.base}–{cpu.boost} GHz · {cpu.tdp}W</div>
                                 </div>
                                 <span className={`${llm.text} text-[10px] font-medium hidden md:block whitespace-nowrap`}>{llm.label[lang]}</span>
                                 <div className={`${pc.bg} ${pc.text} px-2 py-1.5 rounded-lg text-right shrink-0 w-24`}>
@@ -1061,10 +785,10 @@ function App() {
                                   onClick={e=>{e.stopPropagation();toggleCompare(cpu.model);}}
                                   disabled={!compareList.includes(cpu.model)&&compareList.length>=4}
                                   title={compareList.includes(cpu.model)?"Aus Vergleich entfernen":compareList.length>=4?"Max. 4 CPUs":"Zum Vergleich hinzufügen"}
-                                  className={`shrink-0 w-5 h-5 rounded text-[10px] font-bold transition-all border ${compareList.includes(cpu.model)?"bg-[#1f6feb] border-[#1f6feb] text-[#e6edf3]":compareList.length>=4?"bg-[#161b22] border-[#30363d] text-[#3d444d] cursor-not-allowed":"bg-[#21262d] border-[#30363d] text-[#6e7681] hover:text-[#c9d1d9] hover:border-[#484f58]"}`}>
+                                  className={`shrink-0 w-7 h-7 rounded text-xs font-bold transition-all border ${compareList.includes(cpu.model)?"bg-[#1f6feb] border-[#1f6feb] text-[#e6edf3]":compareList.length>=4?"bg-[#161b22] border-[#30363d] text-[#3d444d] cursor-not-allowed":"bg-[#21262d] border-[#30363d] text-[#6e7681] hover:text-[#c9d1d9] hover:border-[#484f58]"}`}>
                                   {compareList.includes(cpu.model)?"✓":"+"}
                                 </button>
-                                <span className={`text-[#484f58] text-xs shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
+                                <span className={`text-[#484f58] text-sm shrink-0 transition-transform ${isOpen?"rotate-180":""}`}>▾</span>
                               </button>
 
                               {isOpen && (
@@ -1075,7 +799,7 @@ function App() {
                                       ["llm",   <svg viewBox="0 0 16 16" width="11" height="11" fill="currentColor"><path d="M6.5.75V2h3V.75a.75.75 0 0 1 1.5 0V2h.75A2.25 2.25 0 0 1 14 4.25V5h1.25a.75.75 0 0 1 0 1.5H14v3h1.25a.75.75 0 0 1 0 1.5H14v.75A2.25 2.25 0 0 1 11.75 14H11v1.25a.75.75 0 0 1-1.5 0V14h-3v1.25a.75.75 0 0 1-1.5 0V14H4.25A2.25 2.25 0 0 1 2 11.75V11H.75a.75.75 0 0 1 0-1.5H2v-3H.75a.75.75 0 0 1 0-1.5H2V4.25A2.25 2.25 0 0 1 4.25 2H5V.75a.75.75 0 0 1 1.5 0ZM3.5 4.25v7.5c0 .414.336.75.75.75h7.5a.75.75 0 0 0 .75-.75v-7.5a.75.75 0 0 0-.75-.75h-7.5a.75.75 0 0 0-.75.75Zm2 1.5A.75.75 0 0 1 6.25 5h3.5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-.75.75h-3.5A.75.75 0 0 1 5.5 9.25Z"/></svg>, T[lang].tabLlm],
                                     ].map(([t,icon,label])=>(
                                       <button key={t} onClick={()=>setTab(cpu.model,t)}
-                                        className={`flex-1 inline-flex items-center justify-center gap-1 py-1.5 text-[11px] font-medium transition-colors ${curTab===t?"text-[#58a6ff] border-b-2 border-[#1f6feb] bg-[#21262d]":"text-[#6e7681] hover:text-[#c9d1d9]"}`}>
+                                        className={`flex-1 inline-flex items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors ${curTab===t?"text-[#58a6ff] border-b-2 border-[#1f6feb] bg-[#21262d]":"text-[#6e7681] hover:text-[#c9d1d9]"}`}>
                                         {icon}{label}
                                       </button>
                                     ))}
@@ -1084,32 +808,36 @@ function App() {
                                     <div className="px-3 pb-3 pt-2.5 space-y-2">
                                       {CPU_LAUNCH[cpu.model] && (
                                         <div className="grid grid-cols-2 gap-2 text-xs">
-                                          <div className="bg-[#21262d] rounded-lg p-2">
-                                            <div className="text-[#6e7681] mb-0.5 text-[10px]">{lang==="de"?"UVP (Launch)":"MSRP (Launch)"}</div>
-                                            <div className="font-bold text-[#e6edf3] text-[11px]">{CPU_LAUNCH[cpu.model].msrp}</div>
+                                          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3">
+                                            <div className="text-[#6e7681] mb-0.5 text-xs">{lang==="de"?"UVP (Launch)":"MSRP (Launch)"}</div>
+                                            <div className="font-bold text-[#e6edf3] text-xs">{CPU_LAUNCH[cpu.model].msrp}</div>
                                           </div>
-                                          <div className="bg-[#21262d] rounded-lg p-2">
-                                            <div className="text-[#6e7681] mb-0.5 text-[10px]">{lang==="de"?"Erschienen":"Released"}</div>
-                                            <div className="font-bold text-[#e6edf3] text-[11px]">{CPU_LAUNCH[cpu.model].released}</div>
+                                          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3">
+                                            <div className="text-[#6e7681] mb-0.5 text-xs">{lang==="de"?"Erschienen":"Released"}</div>
+                                            <div className="font-bold text-[#e6edf3] text-xs">{CPU_LAUNCH[cpu.model].released}</div>
                                           </div>
                                         </div>
                                       )}
                                       <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
                                         {[
-                                          {l:"Threads",v:cpu.threads},
-                                          {l:"PCIe",v:cpu.pcie},
-                                          {l:"RAM",v:cpu.ram},
-                                          {l:"TDP",v:`${cpu.tdp}W`},
-                                        ].map(({l,v})=>(
-                                          <div key={l} className="bg-[#21262d] rounded-lg p-2">
-                                            <div className="text-[#6e7681] mb-0.5 text-[10px]">{l}</div>
-                                            <div className="font-bold text-[#e6edf3] text-[11px]">{v}</div>
+                                          {i:<svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M5 1a2 2 0 0 0-2 2v1H1.75a.75.75 0 0 0 0 1.5H3v1.5H1.75a.75.75 0 0 0 0 1.5H3V9H1.75a.75.75 0 0 0 0 1.5H3V12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1.5h1.25a.75.75 0 0 0 0-1.5H13V8h1.25a.75.75 0 0 0 0-1.5H13V5.5h1.25a.75.75 0 0 0 0-1.5H13V3a2 2 0 0 0-2-2zm0 1.5h6a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5z"/></svg>, l:lang==="de"?"Kerne":"Cores", v:`${cpu.cores}${cpu.coreDetail?" ("+cpu.coreDetail+")":""}`},
+                                          {i:<svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5zm0 5h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5zm0 5h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5z"/></svg>, l:"Threads", v:cpu.threads},
+                                          {i:<svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M10.38 1.47a.75.75 0 0 1 .28 1.02L7.04 7.75H11a.75.75 0 0 1 .58 1.23l-6 7.5a.75.75 0 0 1-1.31-.65l1.5-5H2.75a.75.75 0 0 1-.57-1.23l7.5-9a.75.75 0 0 1 1.2.13Z"/></svg>, l:"GHz", v:`${cpu.base}–${cpu.boost}`},
+                                          {i:<svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M1 7.775V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 0 1 0 2.474l-5.026 5.026a1.75 1.75 0 0 1-2.474 0l-6.25-6.25A1.752 1.752 0 0 1 1 7.775Zm1.5 0c0 .066.026.13.073.177l6.25 6.25a.25.25 0 0 0 .354 0l5.025-5.025a.25.25 0 0 0 0-.354l-6.25-6.25a.25.25 0 0 0-.177-.073H2.75a.25.25 0 0 0-.25.25ZM6 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/></svg>, l:"Codename", v:cpu.arch.split("·")[0]},
+                                          {i:<svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M6.5 1.75v3.026a1.75 1.75 0 0 1-.167.743L3.533 10.5h8.934L9.667 5.519a1.75 1.75 0 0 1-.167-.743V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Zm-2.25-.25A1.75 1.75 0 0 1 6 0h4a1.75 1.75 0 0 1 1.75 1.75v3.026a.25.25 0 0 0 .024.106l2.8 5.857a1.75 1.75 0 0 1-1.574 2.511H2.999a1.75 1.75 0 0 1-1.574-2.511l2.8-5.857a.25.25 0 0 0 .024-.106V1.75Z"/></svg>, l:"Prozess", v:cpu.arch.split("·")[1]},
+                                          {i:<svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M1.75 1h12.5c.966 0 1.75.784 1.75 1.75v4c0 .966-.784 1.75-1.75 1.75H1.75A1.75 1.75 0 0 1 0 6.75v-4C0 1.784.784 1 1.75 1ZM1.5 2.75v4c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-4a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25ZM0 11.75C0 10.784.784 10 1.75 10h12.5c.966 0 1.75.784 1.75 1.75v2.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25ZM1.5 12v2.25c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V12a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25Zm11.25 1a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm-8.5-5a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"/></svg>, l:"PCIe", v:cpu.pcie},
+                                          {i:<svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M1 3.5C1 2.119 4.03 1 8 1s7 1.119 7 2.5v9c0 1.381-3.03 2.5-7 2.5s-7-1.119-7-2.5v-9ZM14.5 6.135C13.023 6.979 10.718 7.5 8 7.5s-5.023-.521-6.5-1.365V8.5C1.5 9.391 4.268 10.5 8 10.5s6.5-1.109 6.5-2ZM1.5 9.615V12.5c0 .891 2.768 2 6.5 2s6.5-1.109 6.5-2V9.615C13.023 10.459 10.718 11 8 11s-5.023-.541-6.5-1.385ZM8 2.5c-3.732 0-6.5 1.109-6.5 2s2.768 2 6.5 2 6.5-1.109 6.5-2-2.768-2-6.5-2Z"/></svg>, l:"RAM", v:cpu.ram},
+                                          {i:<svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M9.504.43a1.516 1.516 0 0 1 2.437 1.713L9.232 6H12a1 1 0 0 1 .78 1.631l-5.992 7a1.516 1.516 0 0 1-2.437-1.713L7.03 9H4a1 1 0 0 1-.78-1.631l5.992-7a1 1 0 0 1 .292-.939z"/></svg>, l:"TDP", v:`${cpu.tdp}W`},
+                                        ].map(({i,l,v})=>(
+                                          <div key={l} className="bg-white/5 backdrop-blur-sm rounded-lg p-3">
+                                            <div className="text-[#6e7681] mb-0.5 text-xs flex items-center gap-1">{i}{l}</div>
+                                            <div className="font-bold text-[#e6edf3] text-xs">{v}</div>
                                           </div>
                                         ))}
                                       </div>
-                                      <div className="bg-[#21262d] rounded-lg p-2.5 text-xs">
-                                        <div className="text-[#6e7681] mb-1.5 text-[10px] uppercase tracking-wider font-semibold">Cinebench</div>
-                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                                      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 text-xs">
+                                        <div className="text-[#6e7681] mb-1.5 text-xs uppercase tracking-wider font-semibold">Cinebench</div>
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                                           <div className="flex justify-between"><span className="text-[#6e7681]">R23 Single</span><span className="font-bold text-[#e6edf3]">{cpu.cbR23s??'–'}</span></div>
                                           <div className="flex justify-between"><span className="text-[#6e7681]">R23 Multi</span><span className="font-bold text-[#e6edf3]">{cpu.cbR23m??'–'}</span></div>
                                           <div className="flex justify-between"><span className="text-[#6e7681]">R24 Single</span><span className="font-bold text-[#e6edf3]">{cpu.cbR24s??'–'}</span></div>
@@ -1117,8 +845,8 @@ function App() {
                                         </div>
                                       </div>
                                       {cpu.igpu && (
-                                        <div className="bg-[#0a1929] border border-[#1c3a5e] rounded-lg p-2.5 text-xs">
-                                          <div className="text-[#58a6ff] font-semibold mb-1 text-[10px] uppercase tracking-wider">{T[lang].igpuTitle}</div>
+                                        <div className="bg-[#0a1929]/60 backdrop-blur-sm border border-[#58a6ff]/20 rounded-lg p-3 text-xs">
+                                          <div className="text-[#58a6ff] font-semibold mb-1 text-xs uppercase tracking-wider">{T[lang].igpuTitle}</div>
                                           <div className="text-[#a5d6ff] font-medium">{cpu.igpu}</div>
                                           <div className="text-[#58a6ff] text-[10px] mt-1">{T[lang].igpuNote}</div>
                                         </div>
@@ -1127,10 +855,10 @@ function App() {
                                   )}
                                   {curTab==="llm" && (
                                     <div className="px-3 pb-3 pt-2.5">
-                                      <div className={`inline-flex items-center gap-2 mb-2 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#21262d] ${llm.text}`}>
+                                      <div className={`inline-flex items-center gap-2 mb-2 px-2.5 py-1.5 rounded-full text-xs font-semibold bg-[#21262d] ${llm.text}`}>
                                         LLM: {llm.label[lang]}
                                       </div>
-                                      <div className="bg-[#21262d] rounded-lg p-2.5 text-xs text-[#c9d1d9] leading-relaxed">{cpu.llmText}</div>
+                                      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 text-xs text-[#c9d1d9] leading-relaxed">{cpu.llmText}</div>
                                     </div>
                                   )}
                                 </div>
@@ -1155,7 +883,7 @@ function App() {
               {compareList.length>0 && (
                 <div className="flex items-center gap-2">
                   <button onClick={shareCompare}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all ${copied?"bg-emerald-900 border-emerald-700 text-emerald-300":"bg-[#21262d] border-[#30363d] text-[#8b949e] hover:border-[#58a6ff] hover:text-[#58a6ff]"}`}>
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium border transition-all ${copied?"bg-emerald-900 border-emerald-700 text-emerald-300":"bg-[#21262d] border-[#30363d] text-[#8b949e] hover:border-[#58a6ff] hover:text-[#58a6ff]"}`}>
                     {copied ? (
                       <><svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>{T[lang].shareCopied}</>
                     ) : (
@@ -1163,11 +891,11 @@ function App() {
                     )}
                   </button>
                   <button onClick={exportPng}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border bg-[#21262d] border-[#30363d] text-[#8b949e] hover:border-[#3fb950] hover:text-[#3fb950] transition-all">
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium border bg-[#21262d] border-[#30363d] text-[#8b949e] hover:border-[#3fb950] hover:text-[#3fb950] transition-all">
                     <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"/><path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.97a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.779a.749.749 0 1 1 1.06-1.06l1.97 1.97Z"/></svg>
                     {T[lang].exportBtn}
                   </button>
-                  <button onClick={()=>setCompareList([])} className="text-xs text-[#6e7681] hover:text-red-400 transition-colors">{T[lang].compareClear}</button>
+                  <button onClick={()=>setCompareList([])} className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium border bg-[#21262d] border-[#30363d] text-[#8b949e] hover:border-red-700 hover:text-red-400 transition-all">{T[lang].compareClear}</button>
                 </div>
               )}
             </div>
@@ -1196,19 +924,19 @@ function App() {
                 {i:12,numVal:null,          lower:false, val:c=>LC[c.llmRating].label[lang]},
               ];
               return (
-                <div ref={compareTableRef} className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden">
+                <div ref={compareTableRef} className="bg-[#161b22]/60 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="border-b border-[#30363d]">
-                          <th className="text-left px-3 py-2.5 text-[#6e7681] text-[10px] uppercase tracking-wider min-w-[110px] sticky left-0 bg-[#161b22] z-10">{T[lang].compareSpec}</th>
+                          <th className="text-left px-3 py-3 text-[#6e7681] text-xs uppercase tracking-wider min-w-[110px] sticky left-0 bg-[#161b22] z-10">{T[lang].compareSpec}</th>
                           {selCpus.map(cpu=>{
                             const meta=PLATFORM_META[cpu.platform];
                             return (
                               <th key={cpu.model} className="px-3 pt-3 pb-2.5 text-left min-w-[155px] align-bottom">
                                 <div className="flex items-end justify-between gap-1">
                                   <div className="flex flex-col gap-1 items-start">
-                                    <span className={"compare-badge rounded font-bold "+meta.style} style={{display:"inline-block",padding:"4px 7px",fontSize:"9px",lineHeight:"1",whiteSpace:"nowrap"}}>{meta.label}</span>
+                                    <span className={`inline-block rounded font-bold text-[9px] leading-none whitespace-nowrap px-[7px] py-1 ${meta.style}`}>{meta.label}</span>
                                     <div className="text-[#e6edf3] font-bold text-[12px] leading-snug">{cpu.model}</div>
                                   </div>
                                   <button onClick={()=>toggleCompare(cpu.model)} className="text-[#484f58] hover:text-red-400 text-xs shrink-0 mb-0.5 transition-colors">✕</button>
@@ -1224,12 +952,12 @@ function App() {
                           const best = nums.length ? (lower?Math.min(...nums):Math.max(...nums)) : null;
                           return (
                             <tr key={i} className="border-b border-[#30363d] hover:bg-[#21262d]">
-                              <td className="px-3 py-2 text-[#6e7681] text-[10px] font-semibold uppercase tracking-wider sticky left-0 bg-[#161b22]">{T[lang].compareRows[i]}</td>
+                              <td className="px-3 py-2.5 text-[#6e7681] text-xs font-semibold uppercase tracking-wider sticky left-0 bg-[#161b22]">{T[lang].compareRows[i]}</td>
                               {selCpus.map(cpu=>{
                                 const n = numVal ? numVal(cpu) : null;
                                 const isBest = best!==null && n===best;
                                 return (
-                                  <td key={cpu.model} className={"px-3 py-2 "+(isBest?"text-emerald-400 font-bold":"text-[#c9d1d9]")}>
+                                  <td key={cpu.model} className={"px-3 py-2.5 "+(isBest?"text-emerald-400 font-bold":"text-[#c9d1d9]")}>
                                     {val(cpu)}
                                   </td>
                                 );
@@ -1248,7 +976,7 @@ function App() {
         )}
 
         {/* Recommendations */}
-        <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-3.5 mt-4">
+        <div className="bg-[#161b22]/60 backdrop-blur-sm border border-white/10 rounded-xl p-4 mt-4">
           <div className="text-[#c9d1d9] font-semibold text-sm mb-2">{T[lang].recTitle}</div>
           <div className="space-y-1.5 text-xs text-[#8b949e]">
             {T[lang].recs.map(({i,l,c,r})=>(
@@ -1272,6 +1000,18 @@ function App() {
           </a>
         </div>
       </div>
+
+      {/* Floating compare button */}
+      {compareList.length >= 2 && view !== "compare" && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50">
+          <button
+            onClick={()=>setView("compare")}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1f6feb]/75 backdrop-blur-md hover:bg-[#388bfd]/80 text-[#e6edf3] text-sm font-semibold rounded-full shadow-lg border border-white/20 transition-all">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M8.75 1.75a.75.75 0 0 0-1.5 0v12.5a.75.75 0 0 0 1.5 0V1.75ZM1 3.75A.75.75 0 0 1 1.75 3H6v10H1.75A.75.75 0 0 1 1 12.25V3.75ZM10 3h4.25a.75.75 0 0 1 .75.75v8.5a.75.75 0 0 1-.75.75H10V3Z"/></svg>
+            {T[lang].compareBtn(compareList.length)}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
